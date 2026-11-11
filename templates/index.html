@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSV Color Segmentation - Tách và Nhận Biết Màu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>HSV Segmentation</h1>
+                <p>Tách và nhận biết màu</p>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#upload" class="nav-item active" onclick="switchTab('upload')">
+                    <span class="icon">📤</span>
+                    <span>Tải Ảnh</span>
+                </a>
+                <a href="#hsv" class="nav-item" onclick="switchTab('hsv')">
+                    <span class="icon">🎨</span>
+                    <span>Phân Đoạn HSV</span>
+                </a>
+                <a href="#filter" class="nav-item" onclick="switchTab('filter')">
+                    <span class="icon">🔧</span>
+                    <span>Lọc Median</span>
+                </a>
+                <a href="#morph" class="nav-item" onclick="switchTab('morph')">
+                    <span class="icon">✨</span>
+                    <span>Morphology</span>
+                </a>
+                <a href="#evaluation" class="nav-item" onclick="switchTab('evaluation')">
+                    <span class="icon">📊</span>
+                    <span>Đánh Giá</span>
+                </a>
+                <a href="#results" class="nav-item" onclick="switchTab('results')">
+                    <span class="icon">📁</span>
+                    <span>Kết Quả</span>
+                </a>
+            </nav>
+            
+            <div class="info-box">
+                <h3>ℹ️ Hướng Dẫn</h3>
+                <p>1. Tải ảnh BGR</p>
+                <p>2. Điều chỉnh ngưỡng HSV</p>
+                <p>3. Áp dụng lọc Median</p>
+                <p>4. Xử lý Morphology</p>
+                <p>5. Đánh giá kết quả</p>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Header -->
+            <header class="header">
+                <h2>Ứng Dụng Tách và Nhận Biết Màu - HSV Color Segmentation</h2>
+                <p>Chuyển đổi ảnh BGR sang HSV, phân đoạn màu mục tiêu, khử nhiễu và xử lý hình thái học</p>
+            </header>
+            
+            <!-- Tab: Upload -->
+            <section id="upload" class="tab-content active">
+                <div class="card">
+                    <h3>📤 Tải Ảnh Đầu Vào</h3>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📸</div>
+                        <p>Kéo thả ảnh hoặc click để chọn</p>
+                        <p class="upload-hint">Hỗ trợ: JPG, PNG, BMP, TIFF</p>
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div id="uploadedImage" class="image-display" style="display: none;">
+                        <img id="previewImage" src="" alt="Ảnh đã tải">
+                        <button class="btn btn-secondary" onclick="resetSession()">Tải Ảnh Khác</button>
+                    </div>
+                    
+                    <div id="uploadStatus" class="status-message"></div>
+                </div>
+            </section>
+            
+            <!-- Tab: HSV Segmentation -->
+            <section id="hsv" class="tab-content">
+                <div class="card">
+                    <h3>🎨 Phân Đoạn Màu HSV</h3>
+                    
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Hue Range 1 (cho màu đỏ: 0-10)</label>
+                            <div class="slider-group">
+                                <input type="range" id="h_min_1" min="0" max="180" value="0" class="slider">
+                                <input type="range" id="h_max_1" min="0" max="180" value="10" class="slider">
+                                <span class="range-display">H1: <span id="h_min_1_val">0</span> - <span id="h_max_1_val">10</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Hue Range 2 (cho màu đỏ: 170-180)</label>
+                            <div class="slider-group">
+                                <input type="range" id="h_min_2" min="0" max="180" value="170" class="slider">
+                                <input type="range" id="h_max_2" min="0" max="180" value="180" class="slider">
+                                <span class="range-display">H2: <span id="h_min_2_val">170</span> - <span id="h_max_2_val">180</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Saturation Range</label>
+                            <div class="slider-group">
+                                <input type="range" id="s_min" min="0" max="255" value="100" class="slider">
+                                <input type="range" id="s_max" min="0" max="255" value="255" class="slider">
+                                <span class="range-display">S: <span id="s_min_val">100</span> - <span id="s_max_val">255</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Value Range</label>
+                            <div class="slider-group">
+                                <input type="range" id="v_min" min="0" max="255" value="100" class="slider">
+                                <input type="range" id="v_max" min="0" max="255" value="255" class="slider">
+                                <span class="range-display">V: <span id="v_min_val">100</span> - <span id="v_max_val">255</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="processImage()">🔄 Xử Lý Ảnh</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Kết Quả Phân Đoạn</h3>
+                    <div class="image-grid">
+                        <div class="image-item">
+                            <h4>Mask Thô (Raw)</h4>
+                            <img id="maskRaw" src="" alt="Mask Raw">
+                        </div>
+                        <div class="image-item">
+                            <h4>Mask Median</h4>
+                            <img id="maskMedian" src="" alt="Mask Median">
+                        </div>
+                        <div class="image-item">
+                            <h4>Mask Morphology</h4>
+                            <img id="maskMorph" src="" alt="Mask Morph">
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tab: Median Filter -->
+            <section id="filter" class="tab-content">
+                <div class="card">
+                    <h3>🔧 Lọc Trung Vị (Median Filter)</h3>
+                    
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Kích Thước Kernel (lẻ)</label>
+                            <select id="median_kernel">
+                                <option value="3">3x3</option>
+                                <option value="5" selected>5x5</option>
+                                <option value="7">7x7</option>
+                                <option value="9">9x9</option>
+                            </select>
+                            <p class="info">Kernel lớn hơn = khử nhiễu nhiều hơn nhưng mất chi tiết</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tab: Morphology -->
+            <section id="morph" class="tab-content">
+                <div class="card">
+                    <h3>✨ Xử Lý Hình Thái Học (Morphology)</h3>
+                    
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Kích Thước Kernel (lẻ)</label>
+                            <select id="morph_kernel">
+                                <option value="3">3x3</option>
+                                <option value="5" selected>5x5</option>
+                                <option value="7">7x7</option>
+                                <option value="9">9x9</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Các Phép Toán</label>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="use_closing" checked>
+                                    Closing (Dilation + Erosion - lấp kín lỗ)
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="use_opening">
+                                    Opening (Erosion + Dilation - loại bỏ nhỏ)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tab: Evaluation -->
+            <section id="evaluation" class="tab-content">
+                <div class="card">
+                    <h3>📊 Đánh Giá Kết Quả</h3>
+                    
+                    <div class="evaluation-input">
+                        <label>Tải Ground Truth Mask</label>
+                        <input type="file" id="groundTruthInput" accept="image/*">
+                        <button class="btn btn-primary" onclick="evaluateResults()">🔍 Đánh Giá</button>
+                    </div>
+                    
+                    <div id="metricsDisplay" class="metrics-display" style="display: none;">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <h4>Pixel Accuracy</h4>
+                                <p class="metric-value" id="metricAccuracy">-</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4>IoU (Jaccard)</h4>
+                                <p class="metric-value" id="metricIoU">-</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Precision</h4>
+                                <p class="metric-value" id="metricPrecision">-</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Recall</h4>
+                                <p class="metric-value" id="metricRecall">-</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4>F1 Score</h4>
+                                <p class="metric-value" id="metricF1">-</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Specificity</h4>
+                                <p class="metric-value" id="metricSpecificity">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="confusionMatrix" class="confusion-matrix" style="display: none;">
+                        <h4>Confusion Matrix</h4>
+                        <table>
+                            <tr>
+                                <td>TP: <span id="tp">-</span></td>
+                                <td>FP: <span id="fp">-</span></td>
+                            </tr>
+                            <tr>
+                                <td>FN: <span id="fn">-</span></td>
+                                <td>TN: <span id="tn">-</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="image-item" id="visualizationDiv" style="display: none;">
+                        <h4>Visualization</h4>
+                        <p class="visualization-legend">🟢 TP (Đúng) | 🔴 FP (Sai dương) | 🔵 FN (Sai âm)</p>
+                        <img id="visualization" src="" alt="Visualization">
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tab: Results -->
+            <section id="results" class="tab-content">
+                <div class="card">
+                    <h3>📁 Tải Xuống Kết Quả</h3>
+                    
+                    <div class="download-buttons">
+                        <button class="btn btn-success" onclick="downloadMask('raw')">📥 Tải Mask Thô</button>
+                        <button class="btn btn-success" onclick="downloadMask('median')">📥 Tải Mask Median</button>
+                        <button class="btn btn-success" onclick="downloadMask('morph')">📥 Tải Mask Cuối</button>
+                    </div>
+                    
+                    <div class="info-box">
+                        <h4>📝 Hướng Dẫn Sử Dụng</h4>
+                        <ul>
+                            <li><strong>Mask Thô:</strong> Kết quả trực tiếp từ phân đoạn HSV</li>
+                            <li><strong>Mask Median:</strong> Sau khi khử nhiễu bằng lọc trung vị</li>
+                            <li><strong>Mask Cuối:</strong> Sau xử lý hình thái học (kết quả tốt nhất)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Status Messages -->
+            <div id="statusContainer" class="status-container"></div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

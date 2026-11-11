@@ -1,0 +1,25 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Flask / uploads / results (file chạy sinh ra, không đẩy)
+uploads/
+results/
+*.log
+
+# Data mẫu nặng (tùy chọn: nếu ảnh test nhẹ thì xóa 2 dòng này để đẩy kèm)
+data/images/
+data/ground_truth/
+
+# Excel kế hoạch nội bộ (nếu muốn giữ private)
+# Ke_Hoach_Phan_Chia_Cong_Viec_HSV_Nhom_5_Nguoi.xlsx
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.txt
+!requirements.txt
