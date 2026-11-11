@@ -6,7 +6,7 @@ Kiểm thử module evaluation
 
 import unittest
 import numpy as np
-from evaluation import SegmentationEvaluator
+from src.evaluation import SegmentationEvaluator
 
 
 class TestSegmentationEvaluator(unittest.TestCase):

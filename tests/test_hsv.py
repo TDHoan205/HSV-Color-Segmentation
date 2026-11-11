@@ -7,7 +7,7 @@ Kiểm thử module hsv_segment
 import unittest
 import numpy as np
 import cv2
-from hsv_segment import HSVSegmenter
+from src.hsv_segment import HSVSegmenter
 
 
 class TestHSVSegmenter(unittest.TestCase):

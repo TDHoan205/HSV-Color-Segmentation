@@ -10,7 +10,7 @@ import cv2
 import os
 import tempfile
 import shutil
-from data_loader import DataLoader
+from src.data_loader import DataLoader
 
 
 class TestDataLoader(unittest.TestCase):

@@ -16,11 +16,11 @@ import numpy as np
 from datetime import datetime
 from pathlib import Path
 
-from data_loader import DataLoader
-from hsv_segment import HSVSegmenter
-from median_filter import MedianFilter
-from morphology import MorphologyOperator
-from evaluation import SegmentationEvaluator
+from src.data_loader import DataLoader
+from src.hsv_segment import HSVSegmenter
+from src.median_filter import MedianFilter
+from src.morphology import MorphologyOperator
+from src.evaluation import SegmentationEvaluator
 
 
 class ExperimentRunner:
