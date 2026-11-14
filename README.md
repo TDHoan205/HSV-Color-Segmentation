@@ -43,9 +43,17 @@ HSV-Color-Segmentation/
 │   ├── test_data.py            # Test data_loader
 │   ├── test_hsv.py             # Test hsv_segment
 │   └── test_evaluation.py       # Test evaluation
+├── scripts/
+│   ├── generate_dataset.py     # Sinh bộ ảnh + Ground Truth (Anh Quân)
+│   └── make_report_figures.py  # Sinh hình minh họa cho báo cáo (Anh Quân)
 ├── data/
-│   ├── images/                 # Ảnh đầu vào
-│   └── ground_truth/           # Ground Truth Mask
+│   ├── README.md               # Tiêu chí chọn ảnh, quy ước, schema metadata
+│   ├── metadata.csv            # Mô tả tình huống từng ảnh
+│   ├── images/                 # Ảnh đầu vào (10 ảnh JPG)
+│   └── ground_truth/           # Ground Truth Mask (10 ảnh PNG nhị phân)
+├── report/
+│   ├── data.md                 # Báo cáo phần dữ liệu (Anh Quân)
+│   └── figures/                # Hình minh họa thật cho báo cáo
 ├── uploads/                    # Thư mục upload tạm thời
 └── results/                    # Kết quả thực nghiệm
 ```
@@ -151,17 +159,23 @@ Confusion Matrix:
 **Chức năng**: Đọc ảnh BGR và Ground Truth Mask
 
 ```python
-from data_loader import DataLoader
+from src.data_loader import DataLoader
 
-loader = DataLoader("data/images", "data/ground_truth")
-image_bgr, gt_mask = loader.load_image_gt_pair("img.jpg", "gt.png")
+loader = DataLoader("data/images", "data/ground_truth", "data/metadata.csv")
+image_bgr, gt_mask = loader.load_image_gt_pair("img_01_red_circle_light_bg.jpg",
+                                                "img_01_red_circle_light_bg.png")
 ```
 
 **API:**
 - `load_image(path)`: Đọc ảnh BGR (H, W, 3)
 - `load_ground_truth(path)`: Đọc GT Mask (H, W)
 - `load_image_gt_pair(img_path, gt_path)`: Đọc cặp
-- `check_data_integrity()`: Kiểm tra dữ liệu
+- `build_dataset()`: Dựng danh sách cặp (ảnh, GT) có trên đĩa
+- `load_metadata()`: Đọc `data/metadata.csv`
+- `get_metadata_by_id(image_id)`: Tra cứu metadata theo mã ảnh
+- `validate_pair(img, gt)`: Kiểm tra 1 cặp theo tiêu chí bàn giao
+- `check_data_integrity()`: Kiểm tra tính toàn vẹn dữ liệu
+- `full_check()`: Kiểm tra toàn diện trước khi bàn giao
 
 ### 2. hsv_segment.py (Mạnh Quân)
 **Chức năng**: Chuyển BGR → HSV, phân đoạn màu
@@ -297,15 +311,20 @@ config = {
 
 ## 📊 Tạo Dữ Liệu Test
 
+Bộ dữ liệu chuẩn của nhóm (10 ảnh màu đỏ + Ground Truth + metadata) đã được bàn giao:
+
 ```bash
-# Chạy experiment.py để tạo dữ liệu test
-python experiment.py
+# Kiểm tra sức khỏe bộ dữ liệu
+python -m src.data_loader
+
+# Sinh lại bộ dữ liệu từ đầu (tất định, seed 42)
+python scripts/generate_dataset.py --output data --seed 42
+
+# Sinh hình minh họa cho báo cáo
+python scripts/make_report_figures.py
 ```
 
-Điều này sẽ tạo:
-- Ảnh test trong `data/images/`
-- Ground Truth trong `data/ground_truth/`
-- Kết quả trong thư mục `results/`
+Chi tiết về bộ dữ liệu: [`data/README.md`](data/README.md) và [`report/data.md`](report/data.md).
 
 ## 🐛 Khắc Phục Sự Cố
 
@@ -334,10 +353,10 @@ app.run(debug=True, host='0.0.0.0', port=5001)
 | Thành Viên | Module | File | Chức Năng | Trạng Thái |
 |---|---|---|---|---|
 | Hoàn | Đánh giá & Tích hợp | evaluation.py, experiment.py, main.py | Pixel Accuracy, IoU, thực nghiệm, tích hợp pipeline | ✅ |
-| Anh Quân | Dữ liệu | data_loader.py, tests/test_data.py | Đọc ảnh, GT, kiểm tra dữ liệu | ✅ |
-| Mạnh Quân | HSV | hsv_segment.py, tests/test_hsv.py | BGR→HSV, ngưỡng, Mask thô | ✅ |
-| Anh Tuấn | Median | median_filter.py | Lọc trung vị, so sánh kernel | ✅ |
-| Quốc Anh | Morphology | morphology.py | Erosion, Dilation, Opening, Closing | ✅ |
+| Anh Quân | Dữ liệu | src/data_loader.py, tests/test_data.py, scripts/generate_dataset.py | Đọc ảnh, GT, metadata, kiểm tra dữ liệu, bộ ảnh 10 ảnh + GT | ✅ |
+| Mạnh Quân | HSV | src/hsv_segment.py, tests/test_hsv.py | BGR→HSV, ngưỡng, Mask thô | ✅ |
+| Anh Tuấn | Median | src/median_filter.py | Lọc trung vị, so sánh kernel | ✅ |
+| Quốc Anh | Morphology | src/morphology.py | Erosion, Dilation, Opening, Closing | ✅ |
 
 ## 📝 Phần Báo Cáo Mỗi Người
 

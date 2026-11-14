@@ -3,15 +3,17 @@ venv/
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
 
 # Flask / uploads / results (file chạy sinh ra, không đẩy)
 uploads/
 results/
 *.log
 
-# Data mẫu nặng (tùy chọn: nếu ảnh test nhẹ thì xóa 2 dòng này để đẩy kèm)
-data/images/
-data/ground_truth/
+# Bộ dữ liệu của Anh Quân (data/images + data/ground_truth) là sản phẩm bàn giao
+# cho cả nhóm nên KHÔNG ignore - tổng khoảng 0.5 MB.
+# data/images/
+# data/ground_truth/
 
 # Excel kế hoạch nội bộ (nếu muốn giữ private)
 # Ke_Hoach_Phan_Chia_Cong_Viec_HSV_Nhom_5_Nguoi.xlsx
@@ -23,3 +25,6 @@ Thumbs.db
 .idea/
 *.txt
 !requirements.txt
+
+# File lock tạm của Excel (~$...) - không phải nội dung dự án
+~$*.xlsx

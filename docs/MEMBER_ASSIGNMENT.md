@@ -92,22 +92,22 @@
 #### Nhóm Chức Năng 1: Chốt Dữ Liệu & Màu Mục Tiêu
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| Chọn màu mục tiêu, loại ảnh | ⚠️ CHUẨN BỊ | Cần xác định cùng nhóm |
-| Tiêu chí chọn ảnh | ⚠️ CHUẨN BỰ | Cần ghi trong data/README.md |
+| Chọn màu mục tiêu, loại ảnh | ✅ ANH QUÂN | Màu đỏ (Red), Hue [0-10] ∪ [170-180] - ghi tại data/README.md |
+| Tiêu chí chọn ảnh | ✅ ANH QUÂN | 7 tiêu chí bắt buộc + 8 tình huống phủ mạo + 4 tiêu chí loại bỏ |
 
 #### Nhóm Chức Năng 2: Thu Thập Ảnh Đầu Vào
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| Chuẩn bị 8-12 ảnh | ⚠️ CHUẨN BỊ | Đặt trong data/images/ |
-| Đa dạng nền & ánh sáng | ⚠️ CHUẨN BỊ | Cần đặc tả trong metadata |
-| Tên nhất quán | ⚠️ CHUẨN BỊ | Format: image_001.jpg, etc |
+| Chuẩn bị 8-12 ảnh | ✅ ANH QUÂN | 10 ảnh tại data/images/ (img_01..img_10) |
+| Đa dạng nền & ánh sáng | ✅ ANH QUÂN | 10 tình huống: nền sáng/tối, màu gần giống, bóng đổ, thiếu sáng, cháy sáng, nhiễu |
+| Tên nhất quán | ✅ ANH QUÂN | Format: img_NN_<tinh_huong>.jpg, GT cùng tên .png |
 
 #### Nhóm Chức Năng 3: Tạo Ground Truth
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| Tạo Mask thủ công từng ảnh | ⚠️ CHUẨN BỊ | Đặt trong data/ground_truth/ |
-| Trắng=đối tượng, đen=nền | ⚠️ CHUẨN BỊ | uint8, 0/255 nhị phân |
-| Rà soát thủ công | ⚠️ CHUẨN BỊ | Kiểm tra kích thước khớp |
+| Tạo Mask thủ công từng ảnh | ✅ ANH QUÂN | 10 GT tại data/ground_truth/, sinh cùng lúc vẽ ảnh nên khớp 100% |
+| Trắng=đối tượng, đen=nền | ✅ ANH QUÂN | uint8, 0/255 nhị phân, kiểm tra tự động bằng validate_pair() |
+| Rà soát thủ công | ✅ ANH QUÂN | Đã xem lại toàn bộ 10 cặp ảnh/GT (report/figures/input_vs_gt.png) |
 
 #### Nhóm Chức Năng 4: Viết Bộ Đọc Dữ Liệu
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
@@ -124,46 +124,51 @@
 #### Nhóm Chức Năng 6: Gắn Nhãn Tình Huống
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| Phân nhóm ảnh (sáng/tối/bóng) | ⚠️ CHUẨN BỊ | Cần tạo metadata.csv |
+| Phân nhóm ảnh (sáng/tối/bóng) | ✅ ANH QUÂN | data/metadata.csv - 16 cột, 10 dòng, 10 mã tình huống khác nhau |
 
 #### Nhóm Chức Năng 7: Kiểm Thử & Bàn Giao
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| Chạy loader trên tất cả ảnh | ⚠️ CHUẨN BỊ | Kiểm tra đầu vào khi có data |
-| Không lỗi/thiếu nhãn/lệch kích | ⚠️ CHUẨN BỊ | Khi có ảnh test |
+| Chạy loader trên tất cả ảnh | ✅ ANH QUÂN | full_check(): 10/10 cặp hợp lệ, 0 thiếu GT, 0 lệch kích thước |
+| Không lỗi/thiếu nhãn/lệch kích | ✅ ANH QUÂN | 26/26 test đạt; pipeline end-to-end chạy 10/10 ảnh |
 
 #### Nhóm Chức Năng 8: Báo Cáo Phần Dữ Liệu
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| Viết cách chọn ảnh, tạo GT | ⚠️ CHUẨN BỊ | Cần viết report/data.md |
-| Bảng mô tả ảnh, hình minh họa | ⚠️ CHUẨN BỊ | Khi có data |
+| Viết cách chọn ảnh, tạo GT | ✅ ANH QUÂN | report/data.md - cách chọn ảnh, phương pháp tạo GT, giới hạn dữ liệu |
+| Bảng mô tả ảnh, hình minh họa | ✅ ANH QUÂN | Bảng mô tả 10 ảnh + 5 hình minh họa thật trong report/figures/ |
 
 ### File Phụ Trách Anh Quân
 ```
-✅ data_loader.py      - (220 LOC) Đọc ảnh & GT
-✅ tests/test_data.py  - (60 LOC) Unit tests
-⚠️ data/images/        - Cần chuẩn bị ảnh
-⚠️ data/ground_truth/  - Cần chuẩn bị GT Mask
-⚠️ data/metadata.csv   - Cần tạo
+✅ src/data_loader.py         - Đọc ảnh & GT, metadata, validate_pair(), full_check()
+✅ tests/test_data.py         - 26 unit test (gồm nhóm TestRealDataset trên data thật)
+✅ scripts/generate_dataset.py- Sinh bộ ảnh + Ground Truth tất định (seed 42)
+✅ scripts/make_report_figures.py - Sinh hình minh họa cho báo cáo
+✅ data/README.md             - Tiêu chí chọn ảnh, quy ước, schema metadata
+✅ data/images/               - 10 ảnh JPG (img_01..img_10)
+✅ data/ground_truth/         - 10 GT Mask PNG nhị phân 0/255
+✅ data/metadata.csv          - Metadata 16 cột, 10 dòng
+✅ report/data.md             - Báo cáo phần dữ liệu + 5 hình minh họa
 ```
 
 ### Phần Báo Cáo Anh Quân Phụ Trách
-- Dữ liệu (cách chọn, lý do)
-- Ground Truth (cách tạo, cách bảo đảm)
-- Giới hạn dữ liệu
+- Dữ liệu (cách chọn, lý do) - report/data.md mục 1, 2
+- Ground Truth (cách tạo, cách bảo đảm) - report/data.md mục 3, 6
+- Giới hạn dữ liệu - report/data.md mục 7
 
 ### Cần Làm Thêm - NGAY
 1. ✅ Code data_loader.py: HOÀN
-2. ⚠️ Chuẩn bị 8-12 ảnh trong data/images/
-3. ⚠️ Tạo Ground Truth trong data/ground_truth/
-4. ⚠️ Tạo metadata.csv mô tả ảnh
-5. ⚠️ Viết phần báo cáo
+2. ✅ Chuẩn bị 8-12 ảnh trong data/images/ - ANH QUÂN (10 ảnh)
+3. ✅ Tạo Ground Truth trong data/ground_truth/ - ANH QUÂN (10 GT)
+4. ✅ Tạo metadata.csv mô tả ảnh - ANH QUÂN
+5. ✅ Viết phần báo cáo - ANH QUÂN (report/data.md)
 
 ### Cần Học & Giải Thích
 - Ground Truth là gì? Tại sao cần?
 - Cách tạo Mask nhị phân chính xác
 - Tại sao kích thước phải khớp?
 - Lỗi phổ biến khi làm Ground Truth
+- Vì sao Hue phải lấy trung bình theo góc (circular mean) chứ không lấy trung bình cộng
 
 ---
 
@@ -362,7 +367,7 @@
 | Thành Viên | Module | Trạng Thái Code | Trạng Thái Data | Trạng Thái Báo Cáo | Tổng |
 |---|---|---|---|---|---|
 | **Hoàn** | Evaluation<br/>Experiment<br/>Backend | ✅ 100% | ✅ N/A | ⚠️ 20% | **82%** |
-| **Anh Quân** | DataLoader | ✅ 100% | ⚠️ 0% | ⚠️ 0% | **33%** |
+| **Anh Quân** | DataLoader | ✅ 100% | ✅ 100% | ✅ 100% | **100%** |
 | **Mạnh Quân** | HSV Segment | ✅ 100% | ⚠️ 0% | ⚠️ 0% | **33%** |
 | **Anh Tuấn** | Median Filter | ✅ 100% | ⚠️ 0% | ⚠️ 0% | **33%** |
 | **Quốc Anh** | Morphology | ✅ 100% | ⚠️ 0% | ⚠️ 0% | **33%** |
@@ -374,10 +379,10 @@
 ### Trước Ngày Demo (5-7 Ngày Nữa)
 
 #### Từ Anh Quân
-1. [ ] 8-12 ảnh trong data/images/
-2. [ ] Ground Truth 8-12 trong data/ground_truth/
-3. [ ] metadata.csv mô tả ảnh
-4. [ ] Viết phần báo cáo dữ liệu
+1. [x] 8-12 ảnh trong data/images/ - **ĐÃ XONG: 10 ảnh**
+2. [x] Ground Truth 8-12 trong data/ground_truth/ - **ĐÃ XONG: 10 GT**
+3. [x] metadata.csv mô tả ảnh - **ĐÃ XONG: 16 cột, 10 dòng**
+4. [x] Viết phần báo cáo dữ liệu - **ĐÃ XONG: report/data.md + 5 hình minh họa**
 
 #### Từ Mạnh Quân
 1. [ ] Test 3 bộ ngưỡng (hẹp/vừa/rộng)

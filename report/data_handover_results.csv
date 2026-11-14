@@ -1,0 +1,11 @@
+Exp ID,Image,Status,TP,TN,FP,FN,Pixel Accuracy,IoU,Precision,Recall,F1,Specificity
+1,data/images\img_01_red_circle_light_bg.jpg,Success,19105,153691,0,4,1.0000,0.9998,1.0000,0.9998,0.9999,1.0000
+2,data/images\img_02_red_square_dark_bg.jpg,Success,23394,149394,0,12,0.9999,0.9995,1.0000,0.9995,0.9997,1.0000
+3,data/images\img_03_red_triangle_shadow.jpg,Success,13405,159384,0,11,0.9999,0.9992,1.0000,0.9992,0.9996,1.0000
+4,data/images\img_04_red_multi_objects.jpg,Success,25235,147546,0,19,0.9999,0.9992,1.0000,0.9992,0.9996,1.0000
+5,data/images\img_05_red_on_orange_bg.jpg,Success,15371,157354,73,2,0.9996,0.9951,0.9953,0.9999,0.9976,0.9995
+6,data/images\img_06_red_on_pink_bg.jpg,Success,25066,0,147734,0,0.1451,0.1451,0.1451,1.0000,0.2534,0.0000
+7,data/images\img_07_red_low_light.jpg,Success,0,155607,0,17193,0.9005,0.0000,0.0000,0.0000,0.0000,1.0000
+8,data/images\img_08_red_overexposed.jpg,Success,0,156559,0,16241,0.9060,0.0000,0.0000,0.0000,0.0000,1.0000
+9,data/images\img_09_red_gradient_light.jpg,Success,18107,154675,8,10,0.9999,0.9990,0.9996,0.9994,0.9995,0.9999
+10,data/images\img_10_red_noisy_dark_bg.jpg,Success,15353,157417,10,20,0.9998,0.9980,0.9993,0.9987,0.9990,0.9999
