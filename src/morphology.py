@@ -179,15 +179,21 @@ class MorphologyOperator:
             
         Returns:
             mask_result: Mask sau tất cả phép toán
+
+        Raises:
+            ValueError: Nếu Mask không hợp lệ hoặc phép toán không được hỗ trợ
         """
+        if mask is None or mask.size == 0:
+            raise ValueError("Mask không hợp lệ")
+
         mask_result = mask.copy()
-        
+
         for op_name, op_kwargs in operations:
             if op_name not in self.OPERATIONS:
                 raise ValueError(f"Phép toán không được hỗ trợ: {op_name}")
-            
+
             mask_result = self.apply_operation(mask_result, op_name, **op_kwargs)
-        
+
         return mask_result
     
     def get_kernel_info(self):
