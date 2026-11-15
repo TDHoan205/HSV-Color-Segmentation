@@ -42,10 +42,14 @@ HSV-Color-Segmentation/
 ├── tests/
 │   ├── test_data.py            # Test data_loader
 │   ├── test_hsv.py             # Test hsv_segment
-│   └── test_evaluation.py       # Test evaluation
+│   ├── test_evaluation.py       # Test evaluation
+│   ├── test_median.py           # Test median_filter (Anh Tuấn)
+│   └── fixtures/median/         # Ảnh kiểm thử Median Filter (Anh Tuấn)
 ├── scripts/
 │   ├── generate_dataset.py     # Sinh bộ ảnh + Ground Truth (Anh Quân)
-│   └── make_report_figures.py  # Sinh hình minh họa cho báo cáo (Anh Quân)
+│   ├── make_report_figures.py  # Sinh hình minh họa cho báo cáo (Anh Quân)
+│   ├── run_hsv_comparison.py   # Thực nghiệm so sánh ngưỡng HSV (Mạnh Quân)
+│   └── run_median_comparison.py # Thực nghiệm so sánh kernel Median (Anh Tuấn)
 ├── data/
 │   ├── README.md               # Tiêu chí chọn ảnh, quy ước, schema metadata
 │   ├── metadata.csv            # Mô tả tình huống từng ảnh
@@ -53,7 +57,11 @@ HSV-Color-Segmentation/
 │   └── ground_truth/           # Ground Truth Mask (10 ảnh PNG nhị phân)
 ├── report/
 │   ├── data.md                 # Báo cáo phần dữ liệu (Anh Quân)
+│   ├── median.md               # Báo cáo phần Median Filter (Anh Tuấn)
+│   ├── median_theory.md        # Lý thuyết Median Filter (Anh Tuấn)
 │   └── figures/                # Hình minh họa thật cho báo cáo
+├── README_module.md            # Hướng dẫn tích hợp từng module (Anh Tuấn)
+├── module_contracts.md         # Hợp đồng giao diện chung của dự án
 ├── uploads/                    # Thư mục upload tạm thời
 └── results/                    # Kết quả thực nghiệm
 ```
@@ -97,6 +105,11 @@ python -m pytest tests/
 python -m unittest tests.test_data
 python -m unittest tests.test_hsv
 python -m unittest tests.test_evaluation
+python -m unittest tests.test_median
+
+# Sinh lại ảnh kiểm thử của Median Filter và ảnh so sánh kernel
+python tests/fixtures/median/generate_fixtures.py
+python scripts/run_median_comparison.py
 ```
 
 ## 📖 Hướng Dẫn Sử Dụng
@@ -202,16 +215,21 @@ mask_raw, hsv_image = segmenter.segment(image_bgr)
 **Chức năng**: Khử nhiễu Mask
 
 ```python
-from median_filter import MedianFilter
+from src.median_filter import apply_median_filter, MedianFilter
 
-median = MedianFilter(kernel_size=5)
-mask_filtered = median.filter(mask_raw)
+mask_filtered = apply_median_filter(mask_raw, kernel_size=3)   # hàm chuẩn
+mask_filtered = MedianFilter(kernel_size=5).filter(mask_raw)   # API lớp
 ```
 
 **API:**
-- `filter(mask)`: Áp dụng lọc Median
+- `apply_median_filter(mask_raw, kernel_size=3)`: Lọc trung vị, kiểm tra đầu vào nghiêm ngặt (uint8, 2D, giá trị 0/255; kernel lẻ >= 3)
+- `median_filter(mask_raw, kernel_size=3)`: alias của hàm trên
+- `compare_kernels(mask_raw, kernel_sizes=(3,5,7), ground_truth=None)`: so sánh các kernel
+- `filter(mask)`: Áp dụng lọc Median (lớp `MedianFilter`)
 - `set_kernel_size(size)`: Đặt kích thước kernel
 - `filter_with_comparison(mask)`: So sánh trước/sau
+
+Chi tiết: [`README_module.md`](README_module.md) · Báo cáo: [`report/median.md`](report/median.md)
 
 ### 4. morphology.py (Quốc Anh)
 **Chức năng**: Xử lý hình thái học
@@ -355,7 +373,7 @@ app.run(debug=True, host='0.0.0.0', port=5001)
 | Hoàn | Đánh giá & Tích hợp | evaluation.py, experiment.py, main.py | Pixel Accuracy, IoU, thực nghiệm, tích hợp pipeline | ✅ |
 | Anh Quân | Dữ liệu | src/data_loader.py, tests/test_data.py, scripts/generate_dataset.py | Đọc ảnh, GT, metadata, kiểm tra dữ liệu, bộ ảnh 10 ảnh + GT | ✅ |
 | Mạnh Quân | HSV | src/hsv_segment.py, tests/test_hsv.py | BGR→HSV, ngưỡng, Mask thô | ✅ |
-| Anh Tuấn | Median | src/median_filter.py | Lọc trung vị, so sánh kernel | ✅ |
+| Anh Tuấn | Median | src/median_filter.py, tests/test_median.py, tests/fixtures/median/, scripts/run_median_comparison.py | Lọc trung vị, so sánh kernel 3/5/7 | ✅ |
 | Quốc Anh | Morphology | src/morphology.py | Erosion, Dilation, Opening, Closing | ✅ |
 
 ## 📝 Phần Báo Cáo Mỗi Người
@@ -365,7 +383,7 @@ Mỗi thành viên phải viết phần báo cáo tương ứng:
 - **Hoàn**: Đánh giá, thực nghiệm, kết quả, kết luận
 - **Anh Quân**: Dữ liệu, cách chọn ảnh, Ground Truth
 - **Mạnh Quân**: HSV, chọn ngưỡng, kết quả phân đoạn
-- **Anh Tuấn**: Median Filter, thử nghiệm kernel
+- **Anh Tuấn**: Median Filter, thử nghiệm kernel ([report/median.md](report/median.md))
 - **Quốc Anh**: Morphology, tác động các phép toán
 
 ## 🔗 Tài Liệu Tham Khảo
