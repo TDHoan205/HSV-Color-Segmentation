@@ -10,7 +10,7 @@ Output: mask_raw
 Quy ước:
 - Mask 1 kênh, uint8 0/255, cùng H×W
 - Thang H/S/V của OpenCV:
-  * H: 0-180 (nửa của 360 độ để vừa với uint8)
+  * H: 0-179 (nửa của 360 độ; upper bound 180 được chấp nhận)
   * S: 0-255
   * V: 0-255
 - Xử lý hai khoảng Hue cho màu đỏ nếu cần
@@ -44,7 +44,7 @@ class HSVSegmenter:
                        'value': [min, max]
                    }
         """
-        self.config = config if config is not None else self.DEFAULT_CONFIG.copy()
+        self.config = config.copy() if config is not None else self.DEFAULT_CONFIG.copy()
         self._validate_config()
     
     def _validate_config(self):
@@ -54,18 +54,23 @@ class HSVSegmenter:
         if 'saturation' not in self.config or 'value' not in self.config:
             raise ValueError("Cấu hình phải có 'saturation' và 'value'")
         
-        # Kiểm tra khoảng Hue
-        for h_range in self.config['hue_ranges']:
-            if not (0 <= h_range[0] <= 180 and 0 <= h_range[1] <= 180):
-                raise ValueError(f"Hue phải trong [0, 180], nhận: {h_range}")
-        
-        # Kiểm tra khoảng S và V
-        s_range = self.config['saturation']
-        v_range = self.config['value']
-        if not (0 <= s_range[0] <= 255 and 0 <= s_range[1] <= 255):
-            raise ValueError(f"Saturation phải trong [0, 255], nhận: {s_range}")
-        if not (0 <= v_range[0] <= 255 and 0 <= v_range[1] <= 255):
-            raise ValueError(f"Value phải trong [0, 255], nhận: {v_range}")
+        hue_ranges = self.config['hue_ranges']
+        if not isinstance(hue_ranges, (list, tuple)) or not hue_ranges:
+            raise ValueError("'hue_ranges' phải là danh sách không rỗng các khoảng [min, max]")
+
+        # OpenCV uint8 H values are 0-179; 180 is accepted as an inclusive upper bound.
+        for h_range in hue_ranges:
+            self._validate_range(h_range, 'Hue', 180)
+
+        self._validate_range(self.config['saturation'], 'Saturation', 255)
+        self._validate_range(self.config['value'], 'Value', 255)
+
+    @staticmethod
+    def _validate_range(value_range, name, maximum):
+        if (not isinstance(value_range, (list, tuple)) or len(value_range) != 2
+                or not all(isinstance(value, (int, np.integer)) for value in value_range)
+                or not 0 <= value_range[0] <= value_range[1] <= maximum):
+            raise ValueError(f"{name} cần khoảng [min, max] trong [0, {maximum}], nhận: {value_range}")
     
     def bgr_to_hsv(self, image_bgr):
         """
@@ -76,13 +81,16 @@ class HSVSegmenter:
             
         Returns:
             image_hsv: Ảnh HSV (H, W, 3), uint8
-                       H: 0-180, S: 0-255, V: 0-255
+                       H: 0-179, S: 0-255, V: 0-255
         """
-        if image_bgr is None or image_bgr.size == 0:
+        if not isinstance(image_bgr, np.ndarray) or image_bgr.size == 0:
             raise ValueError("Ảnh đầu vào không hợp lệ")
         
         if len(image_bgr.shape) != 3 or image_bgr.shape[2] != 3:
             raise ValueError(f"Ảnh phải có 3 kênh, nhận: {image_bgr.shape}")
+
+        if image_bgr.dtype != np.uint8:
+            raise ValueError(f"Ảnh BGR phải có dtype uint8, nhận: {image_bgr.dtype}")
         
         image_hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
         return image_hsv
@@ -97,8 +105,11 @@ class HSVSegmenter:
         Returns:
             mask_raw: Mask nhị phân (H, W), uint8, giá trị 0/255
         """
-        if image_hsv is None or image_hsv.size == 0:
+        if not isinstance(image_hsv, np.ndarray) or image_hsv.size == 0:
             raise ValueError("Ảnh HSV đầu vào không hợp lệ")
+
+        if image_hsv.ndim != 3 or image_hsv.shape[2] != 3 or image_hsv.dtype != np.uint8:
+            raise ValueError("Ảnh HSV phải có shape (H, W, 3) và dtype uint8")
         
         h, s, v = cv2.split(image_hsv)
         
@@ -145,11 +156,15 @@ class HSVSegmenter:
             **kwargs: Các tham số cần cập nhật
                      (color_name, hue_ranges, saturation, value)
         """
-        for key in kwargs:
-            if key in self.config:
-                self.config[key] = kwargs[key]
-        
-        self._validate_config()
+        updated = self.config.copy()
+        updated.update({key: value for key, value in kwargs.items() if key in updated})
+        previous = self.config
+        self.config = updated
+        try:
+            self._validate_config()
+        except ValueError:
+            self.config = previous
+            raise
     
     def get_config(self):
         """Trả về cấu hình hiện tại"""

@@ -1,0 +1,641 @@
+{
+  "dataset": "Existing AQuan dataset; see scripts/generate_dataset.py for generation",
+  "image_count": 10,
+  "stage": "raw HSV mask only",
+  "versions": {
+    "opencv": "5.0.0",
+    "numpy": "2.5.3"
+  },
+  "configs": {
+    "narrow": {
+      "color_name": "Red",
+      "hue_ranges": [
+        [
+          0,
+          5
+        ],
+        [
+          175,
+          179
+        ]
+      ],
+      "saturation": [
+        150,
+        255
+      ],
+      "value": [
+        150,
+        255
+      ]
+    },
+    "medium": {
+      "color_name": "Red",
+      "hue_ranges": [
+        [
+          0,
+          10
+        ],
+        [
+          170,
+          179
+        ]
+      ],
+      "saturation": [
+        100,
+        255
+      ],
+      "value": [
+        100,
+        255
+      ]
+    },
+    "wide": {
+      "color_name": "Red",
+      "hue_ranges": [
+        [
+          0,
+          15
+        ],
+        [
+          165,
+          179
+        ]
+      ],
+      "saturation": [
+        50,
+        255
+      ],
+      "value": [
+        50,
+        255
+      ]
+    }
+  },
+  "macro_average": {
+    "narrow": {
+      "pixel_accuracy": 0.9752453703703704,
+      "iou": 0.7421745517520547,
+      "precision": 0.7999601132782896,
+      "recall": 0.7422144225658451,
+      "f1": 0.7640305260698643
+    },
+    "medium": {
+      "pixel_accuracy": 0.8950873842592595,
+      "iou": 0.713721987410891,
+      "precision": 0.8137806813064439,
+      "recall": 0.7999409126712395,
+      "f1": 0.7251524815862644
+    },
+    "wide": {
+      "pixel_accuracy": 0.9120804398148147,
+      "iou": 0.8916920814887161,
+      "precision": 0.8930153355672111,
+      "recall": 0.9986765308255162,
+      "f1": 0.9136723488654439
+    }
+  },
+  "inputs": [
+    {
+      "image": "data/images/img_01_red_circle_light_bg.jpg",
+      "gt": "data/ground_truth/img_01_red_circle_light_bg.png",
+      "image_sha256": "594f629a6235cd8c860a9c7e550f2ac98586cc2007953a56caabf41e358c9d4d",
+      "gt_sha256": "b4adc8dcc88b2e5ad7f2a83341e3abb8ccf99f8d28cb5305e4df8dfbc1d77887"
+    },
+    {
+      "image": "data/images/img_02_red_square_dark_bg.jpg",
+      "gt": "data/ground_truth/img_02_red_square_dark_bg.png",
+      "image_sha256": "2c5fc1aae956e26f413ea23514cc3eb917c2c52adaeb058f99c786f9f07ea382",
+      "gt_sha256": "1800d29e1983867c796b04fc9c374e64ecb8aa38a1c01b8522fa1b7adbf7266b"
+    },
+    {
+      "image": "data/images/img_03_red_triangle_shadow.jpg",
+      "gt": "data/ground_truth/img_03_red_triangle_shadow.png",
+      "image_sha256": "11fc8139a77164e9fd49289a1b15d5944a9d1fcd50326172bbf23a25cb14d3e3",
+      "gt_sha256": "7a67b2c856b5136bff5f494d926aa4acc9ffc70aa7c071e8d1c6cad125aef250"
+    },
+    {
+      "image": "data/images/img_04_red_multi_objects.jpg",
+      "gt": "data/ground_truth/img_04_red_multi_objects.png",
+      "image_sha256": "f483de0b6380d65b541865c3621137cd702fbf60ff4e0ff096e13d2cb82358b4",
+      "gt_sha256": "6fe4f0d8e24f69ab402cec64a13981feb505f02ddc4cc323786767b8889a6ec2"
+    },
+    {
+      "image": "data/images/img_05_red_on_orange_bg.jpg",
+      "gt": "data/ground_truth/img_05_red_on_orange_bg.png",
+      "image_sha256": "b480db38f3c9d735fb4803420833c3564b688e26d93ed8dfb090785e2ad098ef",
+      "gt_sha256": "96f270fdc48f65c7e71640e8a5e68c92f671405152998adb5af553feb65c1df8"
+    },
+    {
+      "image": "data/images/img_06_red_on_pink_bg.jpg",
+      "gt": "data/ground_truth/img_06_red_on_pink_bg.png",
+      "image_sha256": "051b722f039198b9b44170e24301704285b6a567819203c4d57e21b712f59a87",
+      "gt_sha256": "b9abdeb0198685c9a9975974a4d8a490a5e421c985b74c06a4d1848fcefea369"
+    },
+    {
+      "image": "data/images/img_07_red_low_light.jpg",
+      "gt": "data/ground_truth/img_07_red_low_light.png",
+      "image_sha256": "fac42ec13c84539f968534bce74dec59ce244ca2032e2aaccf29c1ca13bfb909",
+      "gt_sha256": "0e8769fffc180d213c0fa2b0bd34cbd73096b671d591975cd727daf05c0c8ad5"
+    },
+    {
+      "image": "data/images/img_08_red_overexposed.jpg",
+      "gt": "data/ground_truth/img_08_red_overexposed.png",
+      "image_sha256": "6b86a949489a09045c42d1ba9c10d6d4b7e86503d2ca4fc19e0bfd7bf3a94703",
+      "gt_sha256": "ce24af269f4216159cd88ff1c42c51d385e54764f9fef3a1c3e26ef24579516c"
+    },
+    {
+      "image": "data/images/img_09_red_gradient_light.jpg",
+      "gt": "data/ground_truth/img_09_red_gradient_light.png",
+      "image_sha256": "eb1b9a21bb0cc052b6fe1f222005e2bca203e02efbaff0a583b867170e77c060",
+      "gt_sha256": "68f90f97e8ce0b797fb9f3072b7c2456728ea8b4d831df4aaebffe3b3c97a409"
+    },
+    {
+      "image": "data/images/img_10_red_noisy_dark_bg.jpg",
+      "gt": "data/ground_truth/img_10_red_noisy_dark_bg.png",
+      "image_sha256": "2fa89b114180a4bc8d522f4e007db160809ab4df3bbb3dfaa8390328e8e03116",
+      "gt_sha256": "19847d3a50550f5e4b3cc111c76bfdf1caa0993f08e8ff53f6e96865f00f9327"
+    }
+  ],
+  "measurements": [
+    {
+      "image": "img_01_red_circle_light_bg.jpg",
+      "config": "narrow",
+      "selected_pixels": 18860,
+      "total_pixels": 172800,
+      "TP": 18860,
+      "TN": 153691,
+      "FP": 0,
+      "FN": 249,
+      "pixel_accuracy": 0.9985590277777778,
+      "iou": 0.986969490815846,
+      "precision": 1.0,
+      "recall": 0.986969490815846,
+      "f1": 0.9934420184887671,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_01_red_circle_light_bg.jpg",
+      "config": "medium",
+      "selected_pixels": 19109,
+      "total_pixels": 172800,
+      "TP": 19109,
+      "TN": 153691,
+      "FP": 0,
+      "FN": 0,
+      "pixel_accuracy": 1.0,
+      "iou": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_01_red_circle_light_bg.jpg",
+      "config": "wide",
+      "selected_pixels": 19130,
+      "total_pixels": 172800,
+      "TP": 19109,
+      "TN": 153670,
+      "FP": 21,
+      "FN": 0,
+      "pixel_accuracy": 0.9998784722222223,
+      "iou": 0.9989022477783586,
+      "precision": 0.9989022477783586,
+      "recall": 1.0,
+      "f1": 0.9994508224587464,
+      "specificity": 0.9998633622007795
+    },
+    {
+      "image": "img_02_red_square_dark_bg.jpg",
+      "config": "narrow",
+      "selected_pixels": 23217,
+      "total_pixels": 172800,
+      "TP": 23217,
+      "TN": 149394,
+      "FP": 0,
+      "FN": 189,
+      "pixel_accuracy": 0.99890625,
+      "iou": 0.991925147398103,
+      "precision": 1.0,
+      "recall": 0.991925147398103,
+      "f1": 0.9959462068077987,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_02_red_square_dark_bg.jpg",
+      "config": "medium",
+      "selected_pixels": 23406,
+      "total_pixels": 172800,
+      "TP": 23406,
+      "TN": 149394,
+      "FP": 0,
+      "FN": 0,
+      "pixel_accuracy": 1.0,
+      "iou": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_02_red_square_dark_bg.jpg",
+      "config": "wide",
+      "selected_pixels": 23934,
+      "total_pixels": 172800,
+      "TP": 23406,
+      "TN": 148866,
+      "FP": 528,
+      "FN": 0,
+      "pixel_accuracy": 0.9969444444444444,
+      "iou": 0.9779393331662071,
+      "precision": 0.9779393331662071,
+      "recall": 1.0,
+      "f1": 0.9888466413181242,
+      "specificity": 0.9964657215149203
+    },
+    {
+      "image": "img_03_red_triangle_shadow.jpg",
+      "config": "narrow",
+      "selected_pixels": 13100,
+      "total_pixels": 172800,
+      "TP": 13100,
+      "TN": 159384,
+      "FP": 0,
+      "FN": 316,
+      "pixel_accuracy": 0.9981712962962963,
+      "iou": 0.9764460345855694,
+      "precision": 1.0,
+      "recall": 0.9764460345855694,
+      "f1": 0.9880826670689395,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_03_red_triangle_shadow.jpg",
+      "config": "medium",
+      "selected_pixels": 13416,
+      "total_pixels": 172800,
+      "TP": 13415,
+      "TN": 159383,
+      "FP": 1,
+      "FN": 1,
+      "pixel_accuracy": 0.999988425925926,
+      "iou": 0.9998509353804874,
+      "precision": 0.9999254621347644,
+      "recall": 0.9999254621347644,
+      "f1": 0.9999254621347644,
+      "specificity": 0.9999937258445013
+    },
+    {
+      "image": "img_03_red_triangle_shadow.jpg",
+      "config": "wide",
+      "selected_pixels": 13630,
+      "total_pixels": 172800,
+      "TP": 13416,
+      "TN": 159170,
+      "FP": 214,
+      "FN": 0,
+      "pixel_accuracy": 0.9987615740740741,
+      "iou": 0.9842993396918562,
+      "precision": 0.9842993396918562,
+      "recall": 1.0,
+      "f1": 0.9920875545367153,
+      "specificity": 0.9986573307232847
+    },
+    {
+      "image": "img_04_red_multi_objects.jpg",
+      "config": "narrow",
+      "selected_pixels": 24433,
+      "total_pixels": 172800,
+      "TP": 24433,
+      "TN": 147546,
+      "FP": 0,
+      "FN": 821,
+      "pixel_accuracy": 0.9952488425925926,
+      "iou": 0.9674902985665638,
+      "precision": 1.0,
+      "recall": 0.9674902985665638,
+      "f1": 0.9834765632861715,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_04_red_multi_objects.jpg",
+      "config": "medium",
+      "selected_pixels": 25253,
+      "total_pixels": 172800,
+      "TP": 25253,
+      "TN": 147546,
+      "FP": 0,
+      "FN": 1,
+      "pixel_accuracy": 0.999994212962963,
+      "iou": 0.9999604023125049,
+      "precision": 1.0,
+      "recall": 0.9999604023125049,
+      "f1": 0.9999802007642505,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_04_red_multi_objects.jpg",
+      "config": "wide",
+      "selected_pixels": 25997,
+      "total_pixels": 172800,
+      "TP": 25254,
+      "TN": 146803,
+      "FP": 743,
+      "FN": 0,
+      "pixel_accuracy": 0.9957002314814815,
+      "iou": 0.9714197792052929,
+      "precision": 0.9714197792052929,
+      "recall": 1.0,
+      "f1": 0.9855027218981094,
+      "specificity": 0.994964282325512
+    },
+    {
+      "image": "img_05_red_on_orange_bg.jpg",
+      "config": "narrow",
+      "selected_pixels": 15130,
+      "total_pixels": 172800,
+      "TP": 15130,
+      "TN": 157427,
+      "FP": 0,
+      "FN": 243,
+      "pixel_accuracy": 0.99859375,
+      "iou": 0.9841930657646523,
+      "precision": 1.0,
+      "recall": 0.9841930657646523,
+      "f1": 0.9920335704684785,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_05_red_on_orange_bg.jpg",
+      "config": "medium",
+      "selected_pixels": 15458,
+      "total_pixels": 172800,
+      "TP": 15373,
+      "TN": 157342,
+      "FP": 85,
+      "FN": 0,
+      "pixel_accuracy": 0.9995081018518519,
+      "iou": 0.9945012291370164,
+      "precision": 0.9945012291370164,
+      "recall": 1.0,
+      "f1": 0.9972430346080243,
+      "specificity": 0.9994600672057525
+    },
+    {
+      "image": "img_05_red_on_orange_bg.jpg",
+      "config": "wide",
+      "selected_pixels": 15971,
+      "total_pixels": 172800,
+      "TP": 15373,
+      "TN": 156829,
+      "FP": 598,
+      "FN": 0,
+      "pixel_accuracy": 0.9965393518518518,
+      "iou": 0.9625571348068374,
+      "precision": 0.9625571348068374,
+      "recall": 1.0,
+      "f1": 0.9809213884635017,
+      "specificity": 0.9962014139887059
+    },
+    {
+      "image": "img_06_red_on_pink_bg.jpg",
+      "config": "narrow",
+      "selected_pixels": 25071,
+      "total_pixels": 172800,
+      "TP": 25061,
+      "TN": 147724,
+      "FP": 10,
+      "FN": 5,
+      "pixel_accuracy": 0.9999131944444445,
+      "iou": 0.9994018184718456,
+      "precision": 0.9996011327828965,
+      "recall": 0.9998005266097503,
+      "f1": 0.9997008197538744,
+      "specificity": 0.9999323107747708
+    },
+    {
+      "image": "img_06_red_on_pink_bg.jpg",
+      "config": "medium",
+      "selected_pixels": 172800,
+      "total_pixels": 172800,
+      "TP": 25066,
+      "TN": 0,
+      "FP": 147734,
+      "FN": 0,
+      "pixel_accuracy": 0.14505787037037038,
+      "iou": 0.14505787037037038,
+      "precision": 0.14505787037037038,
+      "recall": 1.0,
+      "f1": 0.2533633873429493,
+      "specificity": 0.0
+    },
+    {
+      "image": "img_06_red_on_pink_bg.jpg",
+      "config": "wide",
+      "selected_pixels": 172800,
+      "total_pixels": 172800,
+      "TP": 25066,
+      "TN": 0,
+      "FP": 147734,
+      "FN": 0,
+      "pixel_accuracy": 0.14505787037037038,
+      "iou": 0.14505787037037038,
+      "precision": 0.14505787037037038,
+      "recall": 1.0,
+      "f1": 0.2533633873429493,
+      "specificity": 0.0
+    },
+    {
+      "image": "img_07_red_low_light.jpg",
+      "config": "narrow",
+      "selected_pixels": 0,
+      "total_pixels": 172800,
+      "TP": 0,
+      "TN": 155607,
+      "FP": 0,
+      "FN": 17193,
+      "pixel_accuracy": 0.9005034722222223,
+      "iou": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_07_red_low_light.jpg",
+      "config": "medium",
+      "selected_pixels": 24,
+      "total_pixels": 172800,
+      "TP": 24,
+      "TN": 155607,
+      "FP": 0,
+      "FN": 17169,
+      "pixel_accuracy": 0.9006423611111111,
+      "iou": 0.001395916942941895,
+      "precision": 1.0,
+      "recall": 0.001395916942941895,
+      "f1": 0.0027879421502003837,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_07_red_low_light.jpg",
+      "config": "wide",
+      "selected_pixels": 17519,
+      "total_pixels": 172800,
+      "TP": 17192,
+      "TN": 155280,
+      "FP": 327,
+      "FN": 1,
+      "pixel_accuracy": 0.9981018518518519,
+      "iou": 0.9812785388127854,
+      "precision": 0.9813345510588504,
+      "recall": 0.9999418367940441,
+      "f1": 0.9905508181608665,
+      "specificity": 0.9978985521216912
+    },
+    {
+      "image": "img_08_red_overexposed.jpg",
+      "config": "narrow",
+      "selected_pixels": 0,
+      "total_pixels": 172800,
+      "TP": 0,
+      "TN": 156559,
+      "FP": 0,
+      "FN": 16241,
+      "pixel_accuracy": 0.9060127314814815,
+      "iou": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_08_red_overexposed.jpg",
+      "config": "medium",
+      "selected_pixels": 0,
+      "total_pixels": 172800,
+      "TP": 0,
+      "TN": 156559,
+      "FP": 0,
+      "FN": 16241,
+      "pixel_accuracy": 0.9060127314814815,
+      "iou": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_08_red_overexposed.jpg",
+      "config": "wide",
+      "selected_pixels": 16027,
+      "total_pixels": 172800,
+      "TP": 16027,
+      "TN": 156559,
+      "FP": 0,
+      "FN": 214,
+      "pixel_accuracy": 0.9987615740740741,
+      "iou": 0.9868234714611169,
+      "precision": 1.0,
+      "recall": 0.9868234714611169,
+      "f1": 0.9933680426428659,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_09_red_gradient_light.jpg",
+      "config": "narrow",
+      "selected_pixels": 17734,
+      "total_pixels": 172800,
+      "TP": 17734,
+      "TN": 154683,
+      "FP": 0,
+      "FN": 383,
+      "pixel_accuracy": 0.9977835648148148,
+      "iou": 0.9788596345973395,
+      "precision": 1.0,
+      "recall": 0.9788596345973395,
+      "f1": 0.9893168949262224,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_09_red_gradient_light.jpg",
+      "config": "medium",
+      "selected_pixels": 18117,
+      "total_pixels": 172800,
+      "TP": 18109,
+      "TN": 154675,
+      "FP": 8,
+      "FN": 8,
+      "pixel_accuracy": 0.9999074074074074,
+      "iou": 0.9991172413793104,
+      "precision": 0.999558425787934,
+      "recall": 0.999558425787934,
+      "f1": 0.999558425787934,
+      "specificity": 0.9999482813237395
+    },
+    {
+      "image": "img_09_red_gradient_light.jpg",
+      "config": "wide",
+      "selected_pixels": 18330,
+      "total_pixels": 172800,
+      "TP": 18117,
+      "TN": 154470,
+      "FP": 213,
+      "FN": 0,
+      "pixel_accuracy": 0.9987673611111111,
+      "iou": 0.988379705400982,
+      "precision": 0.988379705400982,
+      "recall": 1.0,
+      "f1": 0.9941558976047411,
+      "specificity": 0.9986229902445647
+    },
+    {
+      "image": "img_10_red_noisy_dark_bg.jpg",
+      "config": "narrow",
+      "selected_pixels": 8247,
+      "total_pixels": 172800,
+      "TP": 8247,
+      "TN": 157427,
+      "FP": 0,
+      "FN": 7126,
+      "pixel_accuracy": 0.958761574074074,
+      "iou": 0.536460027320627,
+      "precision": 1.0,
+      "recall": 0.536460027320627,
+      "f1": 0.6983065198983912,
+      "specificity": 1.0
+    },
+    {
+      "image": "img_10_red_noisy_dark_bg.jpg",
+      "config": "medium",
+      "selected_pixels": 15370,
+      "total_pixels": 172800,
+      "TP": 15351,
+      "TN": 157408,
+      "FP": 19,
+      "FN": 22,
+      "pixel_accuracy": 0.9997627314814815,
+      "iou": 0.9973362785862786,
+      "precision": 0.9987638256343526,
+      "recall": 0.9985689195342483,
+      "f1": 0.9986663630745211,
+      "specificity": 0.9998793091401094
+    },
+    {
+      "image": "img_10_red_noisy_dark_bg.jpg",
+      "config": "wide",
+      "selected_pixels": 16705,
+      "total_pixels": 172800,
+      "TP": 15373,
+      "TN": 156095,
+      "FP": 1332,
+      "FN": 0,
+      "pixel_accuracy": 0.9922916666666667,
+      "iou": 0.9202633941933552,
+      "precision": 0.9202633941933552,
+      "recall": 1.0,
+      "f1": 0.9584762142278197,
+      "specificity": 0.9915389355066158
+    }
+  ]
+}
