@@ -272,19 +272,22 @@
 #### Nhóm Chức Năng 4-5: Thử Nghiệm
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| So sánh kernel 3/5/7 | ⚠️ CHUẨN BỊ | Cần test trên ảnh |
-| Bảng kết quả | ⚠️ CHUẨN BỊ | Khi có data |
+| So sánh kernel 3/5/7 | ✅ HOÀN | scripts/run_median_comparison.py, results/median_comparison/ |
+| Bảng kết quả | ✅ HOÀN | results/median_comparison/metrics.csv + report/median.md |
 
 #### Nhóm Chức Năng 6-7: Báo Cáo
 | Công Việc | Trạng Thái | Chi Tiết Triển Khai |
 |-----------|-----------|-------------------|
-| Viết phần Median | ⚠️ CHUẨN BỊ | Cần ảnh thực tế |
-| Ảnh thể hiện tác dụng & hạn chế | ⚠️ CHUẨN BỊ | Kernel 3 vs 5 vs 7 |
+| Viết phần Median | ✅ HOÀN | report/median.md + report/median_theory.md |
+| Ảnh thể hiện tác dụng & hạn chế | ✅ HOÀN | report/figures/median_comparison.png, median_fixtures.png |
 
 ### File Phụ Trách Anh Tuấn
 ```
 ✅ median_filter.py  - (180 LOC) Median & bilateral filter
-⚠️ results/          - Lưu kết quả test kernel
+✅ results/median_comparison/ - Lưu kết quả test kernel (ảnh + metrics.csv)
+✅ tests/test_median.py - 23 unit test riêng cho module
+✅ tests/fixtures/median/ - Bộ ảnh kiểm thử tất định + README
+✅ scripts/run_median_comparison.py - Thực nghiệm so sánh kernel 3/5/7
 ```
 
 ### Phần Báo Cáo Anh Tuấn Phụ Trách
@@ -295,10 +298,10 @@
 
 ### Cần Làm Thêm - NGAY
 1. ✅ Code median_filter.py: HOÀN
-2. ⚠️ Viết test case riêng cho module
-3. ⚠️ Test trên ảnh thực tế
-4. ⚠️ Chạy 3 kernel: 3, 5, 7
-5. ⚠️ Viết phần báo cáo
+2. ✅ Viết test case riêng cho module: `tests/test_median.py` (23 test)
+3. ✅ Test trên ảnh thực tế: 10 ảnh `data/images/` + 2 fixture tổng hợp
+4. ✅ Chạy 3 kernel: 3, 5, 7 (`scripts/run_median_comparison.py`)
+5. ✅ Viết phần báo cáo: `report/median.md`, `report/median_theory.md`
 
 ### Cần Học & Giải Thích
 - Median filter: lấy giá trị trung vị

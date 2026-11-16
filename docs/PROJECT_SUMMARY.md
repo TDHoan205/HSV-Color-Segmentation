@@ -196,18 +196,22 @@ d:\Code Full\XLATGMT-N05\HSV-Color-Segmentation\
 
 **File Phụ Trách:**
 - ✅ `median_filter.py`: Lớp MedianFilter + bilateral_filter, morphological_close (180+ dòng)
-- Không có test file riêng nhưng có trong main testing
+- ✅ `tests/test_median.py`: 23 unit test riêng cho module
+- ✅ `tests/fixtures/median/`: Bộ ảnh kiểm thử tất định + script sinh ảnh
+- ✅ `scripts/run_median_comparison.py`: Thực nghiệm so sánh kernel 3/5/7
+- ✅ `results/median_comparison/`: Kết quả (ảnh so sánh, metrics.csv, summary.json)
 
 **Trạng Thái Hoàn Thành:**
 - ✅ MedianFilter class với: filter, set_kernel_size, filter_with_comparison
-- ✅ Kiểm tra kernel là số lẻ
-- ✅ Xử lý lỗi: kernel quá lớn, quá nhỏ
+- ✅ Hàm chuẩn `apply_median_filter(mask_raw, kernel_size=3)` + `compare_kernels`
+- ✅ Kiểm tra kernel là số lẻ, 3 <= k <= 31, loại trừ `bool`
+- ✅ Xử lý lỗi: kernel quá lớn, quá nhỏ, sai kiểu
 - ✅ Hỗ trợ bilateral filter và morphological close thêm
 
 **Cần Làm Thêm:**
-- Tạo test case riêng cho median_filter
-- Chạy trên ảnh test, so sánh kernel 3/5/7
-- Viết phần báo cáo: trung vị là gì, kernel lớn/nhỏ ảnh hưởng
+- ✅ Tạo test case riêng cho median_filter (`tests/test_median.py`)
+- ✅ Chạy trên ảnh test, so sánh kernel 3/5/7 (`scripts/run_median_comparison.py`)
+- ✅ Viết phần báo cáo: `report/median.md`, `report/median_theory.md`
 
 **Cần Học & Giải Thích:**
 - Median filter: tại sao gọi là "trung vị"?
