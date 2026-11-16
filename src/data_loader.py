@@ -423,6 +423,192 @@ class DataLoader:
         }
 
 
+# ---------------------------------------------------------------------------
+# Phase D: DataLoader theo manifest + validator GT thô (bổ sung, không đổi API cũ)
+# ---------------------------------------------------------------------------
+import hashlib
+
+MANIFEST_SCHEMA_VERSION = 'dataset_manifest_v1'
+MANIFEST_COLUMNS = [
+    'schema_version', 'sample_id', 'image_id', 'image_path', 'gt_path', 'target_color_id',
+    'data_type', 'source_id', 'license_status', 'annotation_method', 'annotation_version',
+    'annotator', 'review_status', 'review_note', 'width', 'height', 'image_sha256', 'gt_sha256',
+    'scenario', 'lighting', 'background', 'group_id', 'split', 'status', 'exclusion_reason',
+    'next_action',
+]
+MANIFEST_STATUSES = ('approved', 'pending_annotation', 'invalid', 'excluded')
+MANIFEST_SPLITS = ('tuning', 'final_test', 'synthetic_reference', 'none')
+MANIFEST_DATA_TYPES = ('real', 'synthetic')
+_PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
+
+
+def file_sha256(path):
+    """SHA-256 của file (hex)."""
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def validate_raw_gt(gt_path, expected_shape=None):
+    """
+    Validator GT thô: đọc nguyên trạng (không threshold, không resize, không đổi kênh).
+    Yêu cầu: PNG, 1 kênh, uint8, giá trị chỉ {0, 255}, không rỗng, đúng (H, W) nếu có.
+
+    Returns:
+        dict: {'ok': bool, 'issues': [str], 'info': {...}}; không bao giờ tự sửa file.
+    """
+    issues, info = [], {}
+    if not os.path.isfile(gt_path):
+        return {'ok': False, 'issues': [f"GT không tồn tại: {gt_path}"], 'info': info}
+    with open(gt_path, 'rb') as f:
+        raw = f.read()
+    if not raw.startswith(_PNG_SIGNATURE):
+        issues.append("GT không phải file PNG")
+    gt = cv2.imdecode(np.frombuffer(raw, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+    if gt is None:
+        issues.append("Không giải mã được GT")
+        return {'ok': False, 'issues': issues, 'info': info}
+    info.update(shape=tuple(int(v) for v in gt.shape), dtype=str(gt.dtype))
+    if gt.ndim != 2:
+        issues.append(f"GT phải 1 kênh, nhận shape {gt.shape}")
+    if gt.dtype != np.uint8:
+        issues.append(f"GT phải uint8, nhận {gt.dtype}")
+    values = [int(v) for v in np.unique(gt)]
+    info['unique_values'] = values[:10]
+    if not set(values) <= {0, 255}:
+        issues.append(f"GT chỉ được chứa 0/255, nhận {values[:10]}")
+    if gt.ndim == 2 and expected_shape is not None and gt.shape != tuple(expected_shape):
+        issues.append(f"Kích thước GT {gt.shape} khác ảnh {tuple(expected_shape)}")
+    if not np.any(gt):
+        issues.append("GT rỗng (không có vùng đối tượng)")
+    return {'ok': not issues, 'issues': issues, 'info': info}
+
+
+def load_manifest(manifest_path='data/dataset_manifest.csv'):
+    """Đọc manifest thành list dict (giữ nguyên chuỗi)."""
+    with open(manifest_path, 'r', newline='', encoding='utf-8-sig') as f:
+        reader = csv.DictReader(f)
+        header = reader.fieldnames or []
+        rows = [dict(r) for r in reader]
+    return header, rows
+
+
+def validate_manifest(manifest_path='data/dataset_manifest.csv', root='.', check_hash=True):
+    """
+    Kiểm tra manifest. Không sửa gì; trả về toàn bộ lỗi tìm thấy.
+
+    Returns:
+        dict: {'ok', 'errors': [str], 'counts': {...}}
+    """
+    errors = []
+    header, rows = load_manifest(manifest_path)
+    if header != MANIFEST_COLUMNS:
+        errors.append(f"Header manifest sai schema: {header}")
+    seen_ids, seen_images, seen_gt = set(), set(), set()
+    group_splits = {}
+    for r in rows:
+        sid = r.get('sample_id', '')
+        where = f"[{sid}]"
+        if r.get('schema_version') != MANIFEST_SCHEMA_VERSION:
+            errors.append(f"{where} schema_version sai")
+        if sid in seen_ids:
+            errors.append(f"{where} sample_id trùng")
+        seen_ids.add(sid)
+        if r.get('status') not in MANIFEST_STATUSES:
+            errors.append(f"{where} status không hợp lệ: {r.get('status')}")
+        if r.get('split') not in MANIFEST_SPLITS:
+            errors.append(f"{where} split không hợp lệ: {r.get('split')}")
+        if r.get('data_type') not in MANIFEST_DATA_TYPES:
+            errors.append(f"{where} data_type không hợp lệ: {r.get('data_type')}")
+        img = r.get('image_path', '')
+        if img in seen_images:
+            errors.append(f"{where} image_path trùng: {img}")
+        seen_images.add(img)
+        img_abs = os.path.join(root, img)
+        if not os.path.isfile(img_abs):
+            errors.append(f"{where} thiếu ảnh: {img}")
+        elif check_hash and file_sha256(img_abs) != r.get('image_sha256'):
+            errors.append(f"{where} image_sha256 không khớp")
+        status = r.get('status')
+        if status == 'approved':
+            gt = r.get('gt_path', '')
+            if not gt:
+                errors.append(f"{where} approved nhưng thiếu gt_path")
+            else:
+                if gt in seen_gt:
+                    errors.append(f"{where} gt_path trùng: {gt}")
+                seen_gt.add(gt)
+                gt_abs = os.path.join(root, gt)
+                if not os.path.isfile(gt_abs):
+                    errors.append(f"{where} thiếu GT: {gt}")
+                else:
+                    if check_hash and file_sha256(gt_abs) != r.get('gt_sha256'):
+                        errors.append(f"{where} gt_sha256 không khớp")
+                    res = validate_raw_gt(gt_abs, (int(r['height']), int(r['width'])))
+                    errors.extend(f"{where} {i}" for i in res['issues'])
+            if r.get('split') == 'none':
+                errors.append(f"{where} approved nhưng split=none")
+            if r.get('data_type') == 'synthetic' and r.get('split') != 'synthetic_reference':
+                errors.append(f"{where} dữ liệu tổng hợp phải ở split synthetic_reference")
+            if r.get('data_type') == 'real' and r.get('split') == 'synthetic_reference':
+                errors.append(f"{where} dữ liệu thật không được ở split synthetic_reference")
+        else:
+            if not r.get('exclusion_reason') or not r.get('next_action'):
+                errors.append(f"{where} {status} thiếu exclusion_reason/next_action")
+        gid = r.get('group_id', '')
+        if gid:
+            group_splits.setdefault(gid, set()).add(r.get('split'))
+    for gid, splits in group_splits.items():
+        if {'tuning', 'final_test'} <= splits:
+            errors.append(f"Group {gid} nằm ở cả tuning và final_test (rò rỉ)")
+    counts = {s: sum(1 for r in rows if r.get('status') == s) for s in MANIFEST_STATUSES}
+    counts['rows'] = len(rows)
+    return {'ok': not errors, 'errors': errors, 'counts': counts}
+
+
+def build_dataset_from_manifest(manifest_path='data/dataset_manifest.csv', root='.',
+                                split=None, status='approved', data_type=None,
+                                target_color_id=None):
+    """
+    Dựng danh sách record theo manifest. Mặc định chỉ lấy mẫu `approved`.
+
+    Returns:
+        list[dict]: mỗi dict là một dòng manifest cộng 'image_abs' và 'gt_abs'.
+    """
+    _, rows = load_manifest(manifest_path)
+    out = []
+    for r in rows:
+        if status is not None and r['status'] != status:
+            continue
+        if split is not None and r['split'] != split:
+            continue
+        if data_type is not None and r['data_type'] != data_type:
+            continue
+        if target_color_id is not None and r['target_color_id'] != target_color_id:
+            continue
+        rec = dict(r)
+        rec['image_abs'] = os.path.join(root, r['image_path'])
+        rec['gt_abs'] = os.path.join(root, r['gt_path']) if r['gt_path'] else ''
+        out.append(rec)
+    return out
+
+
+def load_manifest_sample(record):
+    """
+    Nạp một record manifest: ảnh BGR và GT thô (không threshold). Raise ValueError nếu GT sai.
+    """
+    image = cv2.imread(record['image_abs'], cv2.IMREAD_COLOR)
+    if image is None:
+        raise ValueError(f"Không đọc được ảnh: {record['image_abs']}")
+    res = validate_raw_gt(record['gt_abs'], image.shape[:2])
+    if not res['ok']:
+        raise ValueError(f"GT không hợp lệ ({record['sample_id']}): {'; '.join(res['issues'])}")
+    gt = cv2.imread(record['gt_abs'], cv2.IMREAD_UNCHANGED)
+    return image, gt
+
+
 def main():
     """Hàm test để kiểm tra module"""
     import sys, io

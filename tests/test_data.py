@@ -10,7 +10,8 @@ import cv2
 import os
 import tempfile
 import shutil
-from src.data_loader import DataLoader
+from src.data_loader import (DataLoader, build_dataset_from_manifest, load_manifest,
+                             load_manifest_sample, validate_manifest, validate_raw_gt)
 
 # Thư mục gốc của dự án (để trỏ tới bộ dữ liệu thật)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -167,114 +168,180 @@ class TestDataLoader(unittest.TestCase):
         self.assertEqual(loader.load_metadata(), [])
 
 
-@unittest.skipUnless(os.path.isdir(REAL_IMAGES_DIR) and os.listdir(REAL_IMAGES_DIR),
-                     "Chưa có bộ dữ liệu thật trong data/images")
-class TestRealDataset(unittest.TestCase):
-    """Kiểm thử trên bộ dữ liệu thật do Anh Quân bàn giao"""
-    
+MANIFEST_PATH = os.path.join(PROJECT_ROOT, 'data', 'dataset_manifest.csv')
+
+
+@unittest.skipUnless(os.path.isfile(MANIFEST_PATH), "Chưa có data/dataset_manifest.csv")
+class TestSyntheticReferenceDataset(unittest.TestCase):
+    """Hợp đồng cũ (10 ảnh đỏ tổng hợp + GT), nay xác định qua manifest (split=synthetic_reference).
+    Thư mục data/images có thêm 24 ảnh thật chưa có GT, nên không còn đếm toàn thư mục."""
+
     def setUp(self):
         self.loader = DataLoader(REAL_IMAGES_DIR, REAL_GT_DIR, REAL_METADATA)
-    
+        self.records = build_dataset_from_manifest(MANIFEST_PATH, PROJECT_ROOT,
+                                                   split='synthetic_reference')
+        self.files = {os.path.basename(r['image_path']) for r in self.records}
+
+    def _pairs(self):
+        return [(r['image_abs'], r['gt_abs']) for r in self.records]
+
     def test_dataset_has_enough_images(self):
-        """Bộ dữ liệu có đủ 8-12 ảnh theo kế hoạch"""
-        count = len(self.loader.list_image_files())
-        self.assertGreaterEqual(count, 8)
-        self.assertLessEqual(count, 12)
-    
-    def test_every_image_has_ground_truth(self):
-        """Mỗi ảnh đều có Ground Truth tương ứng"""
+        self.assertGreaterEqual(len(self.records), 8)
+        self.assertLessEqual(len(self.records), 12)
+
+    def test_every_synthetic_image_has_ground_truth(self):
         report = self.loader.check_data_integrity()
-        self.assertEqual(report['missing_gt'], [])
-        self.assertEqual(report['size_mismatches'], [])
-        self.assertEqual(report['errors'], [])
-        self.assertEqual(report['valid_pairs'], report['total_images'])
-    
+        self.assertFalse(self.files & set(report['missing_gt']))
+        self.assertEqual([e for e in report['errors'] if e['image'] in self.files], [])
+        self.assertEqual([e for e in report['size_mismatches'] if e['image'] in self.files], [])
+
     def test_no_orphan_ground_truth(self):
-        """Không có file GT mồ côi (không ảnh tương ứng)"""
+        self.assertEqual(self.loader.full_check()['orphan_gt'], [])
+
+    def test_synthetic_pairs_pass_full_check(self):
         report = self.loader.full_check()
-        self.assertEqual(report['orphan_gt'], [])
-    
-    def test_full_check_passes(self):
-        """Toàn bộ ảnh đạt tiêu chí: 3 kênh uint8, GT 1 kênh 0/255, cùng kích thước"""
-        report = self.loader.full_check()
-        self.assertTrue(report['all_ok'], 
-                        f"Các ảnh chưa đạt: {[(i['image'], i['issues']) for i in report['per_image'] if not i['ok']]}")
-    
+        bad = [(i['image'], i['issues']) for i in report['per_image']
+               if i['image'] in self.files and not i['ok']]
+        self.assertEqual(bad, [])
+
     def test_image_is_color_3_channels_uint8(self):
-        """Ảnh màu 3 kênh, kiểu uint8"""
-        for img_path, _ in self.loader.build_dataset():
+        for img_path, _ in self._pairs():
             image = cv2.imread(img_path)
             self.assertEqual(image.ndim, 3)
             self.assertEqual(image.shape[2], 3)
             self.assertEqual(image.dtype, np.uint8)
-    
+
     def test_ground_truth_is_binary_single_channel(self):
-        """GT một kênh, uint8, chỉ chứa giá trị 0 và 255"""
-        for _, gt_path in self.loader.build_dataset():
+        for _, gt_path in self._pairs():
             gt = cv2.imread(gt_path, cv2.IMREAD_UNCHANGED)
             self.assertEqual(gt.ndim, 2)
             self.assertEqual(gt.dtype, np.uint8)
-            self.assertTrue(set(np.unique(gt).tolist()).issubset({0, 255}),
-                            f"GT {gt_path} chứa giá trị ngoài 0/255")
-    
+            self.assertTrue(set(np.unique(gt).tolist()).issubset({0, 255}))
+
     def test_image_and_gt_same_size(self):
-        """Ảnh và GT cùng kích thước H×W"""
-        for img_path, gt_path in self.loader.build_dataset():
-            image = cv2.imread(img_path)
-            gt = cv2.imread(gt_path, cv2.IMREAD_GRAYSCALE)
-            self.assertEqual(image.shape[:2], gt.shape)
-    
+        for img_path, gt_path in self._pairs():
+            self.assertEqual(cv2.imread(img_path).shape[:2],
+                             cv2.imread(gt_path, cv2.IMREAD_GRAYSCALE).shape)
+
     def test_ground_truth_not_empty(self):
-        """Mỗi GT có vùng đối tượng (không rỗng)"""
-        for _, gt_path in self.loader.build_dataset():
-            gt = cv2.imread(gt_path, cv2.IMREAD_GRAYSCALE)
-            self.assertGreater(np.count_nonzero(gt), 0)
-    
-    def test_metadata_covers_all_images(self):
-        """metadata.csv mô tả đủ mọi ảnh trong bộ dữ liệu"""
-        metadata = self.loader.load_metadata()
-        self.assertEqual(len(metadata), len(self.loader.list_image_files()))
-        
-        metadata_ids = {row['image_id'] for row in metadata}
-        for img_file in self.loader.list_image_files():
-            self.assertIn(self.loader.extract_image_id(img_file), metadata_ids)
-    
+        for _, gt_path in self._pairs():
+            self.assertGreater(np.count_nonzero(cv2.imread(gt_path, cv2.IMREAD_GRAYSCALE)), 0)
+
+    def test_legacy_metadata_covers_synthetic_images(self):
+        ids = {row['image_id'] for row in self.loader.load_metadata()}
+        for f in self.files:
+            self.assertIn(self.loader.extract_image_id(f), ids)
+
     def test_metadata_required_fields(self):
-        """Mỗi dòng metadata có đủ trường bắt buộc"""
         required = ['image_id', 'image_file', 'gt_file', 'target_color',
                     'scenario', 'background', 'lighting', 'note']
-        
         for row in self.loader.load_metadata():
             for field in required:
-                self.assertIn(field, row)
-                self.assertTrue(str(row[field]).strip(), 
-                                f"Thiếu nội dung trường '{field}' ở ảnh {row.get('image_id')}")
-    
+                self.assertTrue(str(row.get(field, '')).strip(),
+                                f"Thiếu trường '{field}' ở {row.get('image_id')}")
+
     def test_metadata_files_exist(self):
-        """Đường dẫn ảnh/GT trong metadata trỏ tới file thật"""
         for row in self.loader.load_metadata():
             for key in ('image_file', 'gt_file'):
-                path = row[key]
-                if not os.path.isabs(path):
-                    path = os.path.join(PROJECT_ROOT, path)
-                self.assertTrue(os.path.exists(path), f"{key} không tồn tại: {row[key]}")
-    
+                self.assertTrue(os.path.exists(os.path.join(PROJECT_ROOT, row[key])))
+
     def test_metadata_covers_varied_scenarios(self):
-        """Bộ dữ liệu đa dạng tình huống như kế hoạch yêu cầu"""
-        scenarios = {row['scenario'] for row in self.loader.load_metadata()}
-        self.assertGreaterEqual(len(scenarios), 5)
-    
+        self.assertGreaterEqual(len({row['scenario'] for row in self.loader.load_metadata()}), 5)
+
     def test_target_color_is_red(self):
-        """Màu mục tiêu thống nhất là đỏ"""
         for row in self.loader.load_metadata():
             self.assertEqual(row['target_color'], 'Red')
-    
+
     def test_all_loadable(self):
-        """Loader nạp được toàn bộ cặp ảnh/GT mà không lỗi"""
-        for img_path, gt_path in self.loader.build_dataset():
+        for img_path, gt_path in self._pairs():
             image, gt = self.loader.load_image_gt_pair(img_path, gt_path)
             self.assertEqual(image.shape[:2], gt.shape)
-            self.assertEqual(gt.shape, image.shape[:2])
+
+
+@unittest.skipUnless(os.path.isfile(MANIFEST_PATH), "Chưa có data/dataset_manifest.csv")
+class TestManifestContract(unittest.TestCase):
+    """Contract Phase D: manifest, validator, loader theo manifest, split, trung thực dữ liệu thật."""
+
+    def test_manifest_valid_with_hashes(self):
+        res = validate_manifest(MANIFEST_PATH, PROJECT_ROOT, check_hash=True)
+        self.assertEqual(res['errors'], [])
+
+    def test_manifest_covers_every_image_file(self):
+        _, rows = load_manifest(MANIFEST_PATH)
+        on_disk = {'data/images/' + f for f in os.listdir(REAL_IMAGES_DIR)
+                   if os.path.splitext(f)[1].lower() in DataLoader.IMAGE_EXTENSIONS}
+        self.assertEqual({r['image_path'] for r in rows}, on_disk)
+
+    def test_unapproved_have_reason_and_next_action(self):
+        _, rows = load_manifest(MANIFEST_PATH)
+        for r in rows:
+            if r['status'] != 'approved':
+                self.assertTrue(r['exclusion_reason'] and r['next_action'], r['sample_id'])
+                self.assertEqual(r['gt_path'], '')
+
+    def test_no_synthetic_counted_as_real(self):
+        for r in build_dataset_from_manifest(MANIFEST_PATH, PROJECT_ROOT, data_type='real'):
+            self.assertNotEqual(r['split'], 'synthetic_reference')
+
+    def test_split_has_no_group_leakage(self):
+        _, rows = load_manifest(MANIFEST_PATH)
+        by_group = {}
+        for r in rows:
+            by_group.setdefault(r['group_id'], set()).add(r['split'])
+        for g, splits in by_group.items():
+            self.assertFalse({'tuning', 'final_test'} <= splits, g)
+
+    def test_no_hash_overlap_between_tuning_and_final_test(self):
+        _, rows = load_manifest(MANIFEST_PATH)
+        t = {r['image_sha256'] for r in rows if r['split'] == 'tuning'}
+        f = {r['image_sha256'] for r in rows if r['split'] == 'final_test'}
+        self.assertEqual(t & f, set())
+
+    def test_loader_loads_every_approved_record(self):
+        recs = build_dataset_from_manifest(MANIFEST_PATH, PROJECT_ROOT)
+        _, rows = load_manifest(MANIFEST_PATH)
+        self.assertEqual(len(recs), sum(1 for r in rows if r['status'] == 'approved'))
+        for rec in recs:
+            img, gt = load_manifest_sample(rec)
+            self.assertEqual(img.shape[:2], gt.shape)
+
+
+class TestRawGtValidator(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def _write(self, name, arr):
+        p = os.path.join(self.tmp, name)
+        cv2.imwrite(p, arr)
+        return p
+
+    def test_accepts_valid(self):
+        gt = np.zeros((10, 12), np.uint8)
+        gt[2:5, 3:6] = 255
+        self.assertTrue(validate_raw_gt(self._write('ok.png', gt), (10, 12))['ok'])
+
+    def test_rejects_gray_values_without_fixing(self):
+        gt = np.full((10, 12), 128, np.uint8)
+        p = self._write('gray.png', gt)
+        self.assertFalse(validate_raw_gt(p, (10, 12))['ok'])
+        self.assertEqual(int(cv2.imread(p, cv2.IMREAD_UNCHANGED).max()), 128)
+
+    def test_rejects_wrong_size_three_channel_empty_and_missing(self):
+        gt = np.zeros((10, 12), np.uint8)
+        gt[1, 1] = 255
+        self.assertFalse(validate_raw_gt(self._write('a.png', gt), (11, 12))['ok'])
+        self.assertFalse(validate_raw_gt(self._write('b.png', np.dstack([gt] * 3)), (10, 12))['ok'])
+        self.assertFalse(validate_raw_gt(self._write('c.png', np.zeros((10, 12), np.uint8)), (10, 12))['ok'])
+        self.assertFalse(validate_raw_gt(os.path.join(self.tmp, 'none.png'))['ok'])
+
+    def test_rejects_non_png_content(self):
+        gt = np.zeros((10, 12), np.uint8)
+        gt[2:5, 3:6] = 255
+        p = self._write('x.jpg', gt)
+        self.assertFalse(validate_raw_gt(p, (10, 12))['ok'])
 
 
 if __name__ == '__main__':

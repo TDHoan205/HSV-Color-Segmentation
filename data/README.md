@@ -211,3 +211,22 @@ Script sẽ ghi đè `data/images/`, `data/ground_truth/` và `data/metadata.csv
 ## 9. Giới hạn của bộ dữ liệu
 
 Xem phần giới hạn chi tiết trong [`report/data.md`](../report/data.md).
+
+
+---
+
+## 10. Phase D: manifest, nguồn và trạng thái dữ liệu (2026-11-16)
+
+Nguồn sự thật của bộ dữ liệu là `data/dataset_manifest.csv` (34 dòng, schema `dataset_manifest_v1`). Các tệp đi kèm: `dataset_sources.json` (nguồn, quyền sử dụng), `annotation_policy.md` (quy tắc gán nhãn), `dataset_freeze.json` (hash khoá dữ liệu, pipeline, config, seed 42).
+
+| Nhóm | Số ảnh | Trạng thái | Ghi chú |
+|---|---|---|---|
+| Tổng hợp `synthetic_reference` | 10 | approved | Chỉ kiểm thử công cụ, không tính là ảnh thật |
+| Ảnh thật Samsung S911B | 17 | pending_annotation | Chưa có GT và chưa xác nhận người chụp |
+| Ảnh web | 7 | excluded | Chưa có URL, tác giả, giấy phép |
+
+Số cặp ảnh thật approved hiện là 0 (mục tiêu ≥20). Mỗi dòng chưa duyệt có `exclusion_reason` và `next_action` trong manifest.
+
+Các hàm mới trong `src/data_loader.py` (API cũ giữ nguyên): `file_sha256`, `validate_raw_gt`, `load_manifest`, `validate_manifest`, `build_dataset_from_manifest`, `load_manifest_sample`. Bộ test `TestRealDataset` cũ đã được thay bằng `TestSyntheticReferenceDataset` (xác định 10 ảnh qua manifest, vì thư mục `data/images` nay có 34 ảnh).
+
+Kiểm tra: `python scripts/audit_dataset.py` và `python -m unittest discover -s tests`.

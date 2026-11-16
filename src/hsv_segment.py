@@ -20,6 +20,59 @@ import cv2
 import numpy as np
 
 
+# Nguồn preset duy nhất cho 15 nhóm màu (Phase A).
+# Hue theo thang OpenCV 0-179. Các ngưỡng là GIÁ TRỊ KHỞI ĐIỂM,
+# chưa kiểm chứng trên ảnh thực tế nên verified = False.
+# Màu trắng/đen/xám không dùng Hue: hue_ranges = [0, 179] (không lọc Hue).
+COLOR_PRESETS = {
+    'red':           {'name': 'Đỏ',           'hex': '#FF0000', 'mode': 'hue', 'hue_ranges': [[0, 10], [170, 179]], 'saturation': [100, 255], 'value': [100, 255]},
+    'red_orange':    {'name': 'Đỏ cam',        'hex': '#FF4500', 'mode': 'hue', 'hue_ranges': [[9, 16]],          'saturation': [60, 255], 'value': [60, 255]},
+    'orange':        {'name': 'Cam',           'hex': '#FF8000', 'mode': 'hue', 'hue_ranges': [[17, 22]],        'saturation': [60, 255], 'value': [60, 255]},
+    'yellow_orange': {'name': 'Vàng cam',      'hex': '#FFB000', 'mode': 'hue', 'hue_ranges': [[23, 27]],        'saturation': [60, 255], 'value': [60, 255]},
+    'yellow':        {'name': 'Vàng',          'hex': '#FFFF00', 'mode': 'hue', 'hue_ranges': [[28, 35]],        'saturation': [60, 255], 'value': [60, 255]},
+    'yellow_green':  {'name': 'Vàng lục',      'hex': '#9ACD32', 'mode': 'hue', 'hue_ranges': [[36, 44]],        'saturation': [60, 255], 'value': [60, 255]},
+    'green':         {'name': 'Lục',           'hex': '#00A000', 'mode': 'hue', 'hue_ranges': [[45, 85]],        'saturation': [60, 255], 'value': [60, 255]},
+    'blue_green':    {'name': 'Lục lam',       'hex': '#00A0A0', 'mode': 'hue', 'hue_ranges': [[86, 100]],       'saturation': [60, 255], 'value': [60, 255]},
+    'blue':          {'name': 'Lam',           'hex': '#0000FF', 'mode': 'hue', 'hue_ranges': [[101, 125]],      'saturation': [60, 255], 'value': [60, 255]},
+    'blue_purple':   {'name': 'Lam tím',       'hex': '#6A00FF', 'mode': 'hue', 'hue_ranges': [[126, 140]],      'saturation': [60, 255], 'value': [60, 255]},
+    'purple':        {'name': 'Tím',           'hex': '#800080', 'mode': 'hue', 'hue_ranges': [[141, 155]],      'saturation': [60, 255], 'value': [60, 255]},
+    'red_purple':    {'name': 'Đỏ tím',        'hex': '#C00080', 'mode': 'hue', 'hue_ranges': [[156, 169]],      'saturation': [60, 255], 'value': [60, 255]},
+    'white':         {'name': 'Trắng',         'hex': '#FFFFFF', 'mode': 'sv',  'hue_ranges': [[0, 179]],        'saturation': [0, 40],   'value': [200, 255]},
+    'black':         {'name': 'Đen',           'hex': '#000000', 'mode': 'sv',  'hue_ranges': [[0, 179]],        'saturation': [0, 255],  'value': [0, 50]},
+    'gray':          {'name': 'Xám',           'hex': '#808080', 'mode': 'sv',  'hue_ranges': [[0, 179]],        'saturation': [0, 40],   'value': [60, 199]},
+}
+
+COLOR_IDS = tuple(COLOR_PRESETS)
+
+
+def get_color_preset(color_id):
+    """Trả về bản sao preset của màu; ném ValueError nếu color_id không tồn tại"""
+    if not isinstance(color_id, str) or color_id not in COLOR_PRESETS:
+        raise ValueError(f"Màu không tồn tại: {color_id}")
+    preset = COLOR_PRESETS[color_id]
+    return {
+        'color_id': color_id,
+        'name': preset['name'],
+        'hex': preset['hex'],
+        'mode': preset['mode'],
+        'hue_ranges': [list(r) for r in preset['hue_ranges']],
+        'saturation': list(preset['saturation']),
+        'value': list(preset['value']),
+        'verified': False,
+    }
+
+
+def build_hsv_config(color_id):
+    """Tạo config tương thích HSVSegmenter từ preset của màu"""
+    preset = get_color_preset(color_id)
+    return {
+        'color_name': preset['name'],
+        'hue_ranges': preset['hue_ranges'],
+        'saturation': preset['saturation'],
+        'value': preset['value'],
+    }
+
+
 class HSVSegmenter:
     """Lớp phân đoạn ảnh dựa trên không gian màu HSV"""
     

@@ -1,0 +1,42 @@
+{
+  "schema_version": "dataset_sources_v1",
+  "created_by_run": "D-20261116-120846",
+  "note": "Chỉ ghi điều có bằng chứng trong repo. Không suy ra tác giả hay giấy phép từ tên file hoặc EXIF.",
+  "sources": [
+    {
+      "source_id": "src_synth_red_geometric",
+      "data_type": "synthetic",
+      "description": "10 ảnh tổng hợp hình học màu đỏ (img_01..img_10) cùng GT sinh từ hình học, đã có sẵn trong repo trước Phase D.",
+      "origin": "Sinh bởi dự án (ảnh và GT trong data/images/img_* và data/ground_truth/img_*).",
+      "license_status": "project_generated",
+      "license_evidence": "data/metadata.csv mô tả 10 ảnh; chưa tìm thấy script sinh trong repo, nên tác giả cụ thể chưa xác minh.",
+      "evidence_paths": ["data/metadata.csv", "data/README.md"],
+      "usable_for": "synthetic_reference",
+      "usable_for_real_final_test": false
+    },
+    {
+      "source_id": "src_samsung_s911b_unverified",
+      "data_type": "real",
+      "description": "17 ảnh có EXIF Make=samsung, Model=SM-S911B, tên dạng YYYYMMDD_HHMMSS.jpg (chưa tracked trong Git ở HEAD cũ, nằm sẵn trong data/images).",
+      "origin": "Suy ra từ EXIF: có thể là ảnh chụp bằng máy Samsung SM-S911B. Người chụp chưa được xác nhận.",
+      "license_status": "unknown_owner_not_confirmed",
+      "license_evidence": "EXIF và tên file không chứng minh tác giả hay quyền sử dụng.",
+      "evidence_paths": ["results/phase_d/D-20261116-120846/audit/exif_provenance.json"],
+      "required_confirmation": "Hoàn xác nhận bằng văn bản (một dòng trong file này hoặc ghi chú nhóm) rằng nhóm tự chụp, kèm ngày chụp và nơi chụp.",
+      "usable_for": "pending_confirmation",
+      "usable_for_real_final_test": false
+    },
+    {
+      "source_id": "src_web_download_unknown",
+      "data_type": "real",
+      "description": "7 ảnh không có EXIF máy ảnh: apple_green, apple_red, ball_blue, eggplant_purple, lemon_yellow, orange, pngtree-pink-rectangular.",
+      "origin": "Chưa biết URL, tác giả hay ngày tải. Tên pngtree-pink-rectangular.jpg gợi ý nguồn pngtree.com nhưng chưa được xác minh.",
+      "license_status": "unknown_no_attribution",
+      "license_evidence": "Không có file nguồn, URL hay giấy phép trong repo.",
+      "evidence_paths": ["results/phase_d/D-20261116-120846/audit/exif_provenance.json"],
+      "required_confirmation": "Hoàn cung cấp URL gốc, tác giả và giấy phép cho từng ảnh, hoặc thay bằng ảnh tự chụp. Nếu không cung cấp được thì giữ excluded.",
+      "usable_for": "excluded_until_license_verified",
+      "usable_for_real_final_test": false
+    }
+  ]
+}

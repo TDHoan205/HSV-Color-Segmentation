@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 """Tests for HSV conversion, thresholding, and binary masks."""
 
+import copy
 import unittest
 
 import cv2
 import numpy as np
 
-from src.hsv_segment import HSVSegmenter
+from src.hsv_segment import (
+    COLOR_IDS,
+    COLOR_PRESETS,
+    HSVSegmenter,
+    build_hsv_config,
+    get_color_preset,
+)
 
 
 class TestHSVSegmenter(unittest.TestCase):
@@ -115,6 +122,76 @@ class TestHSVSegmenter(unittest.TestCase):
         info = HSVSegmenter.get_hsv_info(hsv, mask)
         self.assertEqual(info["pixel_count"], int(np.count_nonzero(mask)))
         self.assertLessEqual(info["h_min"], info["h_max"])
+
+
+class TestColorPresets(unittest.TestCase):
+    EXPECTED_IDS = {
+        'red', 'red_orange', 'orange', 'yellow_orange', 'yellow', 'yellow_green',
+        'green', 'blue_green', 'blue', 'blue_purple', 'purple', 'red_purple',
+        'white', 'black', 'gray',
+    }
+
+    def test_exactly_15_unique_ids(self):
+        self.assertEqual(len(COLOR_IDS), 15)
+        self.assertEqual(len(set(COLOR_IDS)), 15)
+        self.assertEqual(set(COLOR_IDS), self.EXPECTED_IDS)
+
+    def test_presets_have_required_fields_and_types(self):
+        for cid in COLOR_IDS:
+            with self.subTest(color=cid):
+                preset = COLOR_PRESETS[cid]
+                self.assertIsInstance(preset['name'], str)
+                self.assertRegex(preset['hex'], r'^#[0-9A-Fa-f]{6}$')
+                self.assertIn(preset['mode'], ('hue', 'sv'))
+                self.assertIsInstance(preset['hue_ranges'], list)
+                self.assertGreaterEqual(len(preset['hue_ranges']), 1)
+
+    def test_hue_and_sv_bounds_are_valid_for_opencv(self):
+        for cid in COLOR_IDS:
+            with self.subTest(color=cid):
+                config = build_hsv_config(cid)
+                for h_min, h_max in config['hue_ranges']:
+                    self.assertTrue(0 <= h_min <= h_max <= 179)
+                for s_min, s_max in [config['saturation']]:
+                    self.assertTrue(0 <= s_min <= s_max <= 255)
+                for v_min, v_max in [config['value']]:
+                    self.assertTrue(0 <= v_min <= v_max <= 255)
+
+    def test_red_has_two_hue_ranges_and_matches_default(self):
+        config = build_hsv_config('red')
+        self.assertEqual(len(config['hue_ranges']), 2)
+        default = HSVSegmenter.DEFAULT_CONFIG
+        self.assertEqual(config['saturation'], default['saturation'])
+        self.assertEqual(config['value'], default['value'])
+        # Same Hue coverage as the legacy red config, using 179 instead of 180.
+        for h in range(180):
+            legacy = any(lo <= h <= hi for lo, hi in default['hue_ranges'])
+            new = any(lo <= h <= hi for lo, hi in config['hue_ranges'])
+            self.assertEqual(legacy, new, msg=f"H={h}")
+
+    def test_white_black_gray_do_not_use_hue(self):
+        for cid in ('white', 'black', 'gray'):
+            with self.subTest(color=cid):
+                self.assertEqual(COLOR_PRESETS[cid]['mode'], 'sv')
+                self.assertEqual(COLOR_PRESETS[cid]['hue_ranges'], [[0, 179]])
+
+    def test_each_preset_builds_valid_segmenter(self):
+        for cid in COLOR_IDS:
+            with self.subTest(color=cid):
+                HSVSegmenter(build_hsv_config(cid))
+
+    def test_unknown_color_is_rejected(self):
+        with self.assertRaises(ValueError):
+            get_color_preset('magenta')
+        with self.assertRaises(ValueError):
+            get_color_preset(None)
+
+    def test_get_preset_returns_copy_not_shared_dict(self):
+        before = copy.deepcopy(COLOR_PRESETS)
+        preset = get_color_preset('red')
+        preset['hue_ranges'][0][0] = 99
+        preset['saturation'][0] = 0
+        self.assertEqual(COLOR_PRESETS, before)
 
 
 if __name__ == "__main__":

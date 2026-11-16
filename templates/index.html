@@ -36,6 +36,10 @@
                     <span class="icon">📊</span>
                     <span>Đánh Giá</span>
                 </a>
+                <a href="#compare" class="nav-item" onclick="switchTab('compare')">
+                    <span class="icon">⚖️</span>
+                    <span>So Sánh HSV</span>
+                </a>
                 <a href="#results" class="nav-item" onclick="switchTab('results')">
                     <span class="icon">📁</span>
                     <span>Kết Quả</span>
@@ -85,10 +89,16 @@
             <section id="hsv" class="tab-content">
                 <div class="card">
                     <h3>🎨 Phân Đoạn Màu HSV</h3>
-                    
+
+                    <div class="color-palette-section">
+                        <label>CHỌN MÀU CẦN TÁCH</label>
+                        <div class="color-palette" id="colorPalette"></div>
+                        <div class="color-palette-current">Màu đang chọn: <strong id="currentColorName">Đỏ</strong></div>
+                    </div>
+
                     <div class="controls">
                         <div class="control-group">
-                            <label>Hue Range 1 (cho màu đỏ: 0-10)</label>
+                            <label>Hue Range 1 (khoảng Hue thứ 1)</label>
                             <div class="slider-group">
                                 <input type="range" id="h_min_1" min="0" max="180" value="0" class="slider">
                                 <input type="range" id="h_max_1" min="0" max="180" value="10" class="slider">
@@ -97,7 +107,7 @@
                         </div>
                         
                         <div class="control-group">
-                            <label>Hue Range 2 (cho màu đỏ: 170-180)</label>
+                            <label>Hue Range 2 (khoảng Hue thứ 2, chỉ áp dụng cho màu Đỏ)</label>
                             <div class="slider-group">
                                 <input type="range" id="h_min_2" min="0" max="180" value="170" class="slider">
                                 <input type="range" id="h_max_2" min="0" max="180" value="180" class="slider">
@@ -125,6 +135,7 @@
                     </div>
                     
                     <button class="btn btn-primary" onclick="processImage()">🔄 Xử Lý Ảnh</button>
+                    <button class="btn btn-secondary" onclick="resetPresetToColor()">↺ Khôi phục mặc định màu đang chọn</button>
                 </div>
                 
                 <div class="card">
@@ -139,10 +150,29 @@
                             <img id="maskMedian" src="" alt="Mask Median">
                         </div>
                         <div class="image-item">
-                            <h4>Mask Morphology</h4>
+                            <h4>Mask Sau Morphology (mask_morph)</h4>
                             <img id="maskMorph" src="" alt="Mask Morph">
                         </div>
                     </div>
+                    <div id="resultStale" class="morph-pending" style="display:none;"></div>
+                </div>
+
+                <div class="card" id="morphBeforeAfter">
+                    <h3>Trước / Sau Morphology</h3>
+                    <p class="info">Trước = <code>mask_median</code> (sau Median), Sau = <code>mask_morph</code>. Cùng kích thước; số pixel trắng chỉ để tham khảo, không phải chất lượng.</p>
+                    <div class="image-grid morph-compare">
+                        <div class="image-item">
+                            <h4>Trước: mask_median</h4>
+                            <img id="baMedian" src="" alt="mask_median trước Morphology">
+                            <p class="info" id="baMedianInfo"></p>
+                        </div>
+                        <div class="image-item">
+                            <h4>Sau: mask_morph</h4>
+                            <img id="baMorph" src="" alt="mask_morph sau Morphology">
+                            <p class="info" id="baMorphInfo"></p>
+                        </div>
+                    </div>
+                    <p class="info" id="appliedConfigText">Chưa có kết quả xử lý.</p>
                 </div>
             </section>
             
@@ -150,6 +180,9 @@
             <section id="filter" class="tab-content">
                 <div class="card">
                     <h3>🔧 Lọc Trung Vị (Median Filter)</h3>
+                    <p>1. Tải ảnh ở mục Tải Ảnh và chọn màu ở Phân Đoạn HSV. 2. Chọn kernel lẻ (bắt đầu với 3×3 hoặc 5×5). 3. Bấm áp dụng và xem hai mask bên dưới.</p>
+                    <p class="info">Kernel lớn có thể loại điểm nhiễu nhưng cũng làm mất chi tiết. Sau lọc không nhất thiết tốt hơn; cần GT để đánh giá.</p>
+                    <p id="medianState" class="info" role="status" aria-live="polite"></p>
                     
                     <div class="controls">
                         <div class="control-group">
@@ -160,40 +193,92 @@
                                 <option value="7">7x7</option>
                                 <option value="9">9x9</option>
                             </select>
-                            <p class="info">Kernel lớn hơn = khử nhiễu nhiều hơn nhưng mất chi tiết</p>
+                            <p class="info">Kernel là vùng lân cận dùng để lấy trung vị. Thay đổi lựa chọn chưa tự chạy xử lý.</p>
                         </div>
                     </div>
                 </div>
+                    <button class="btn btn-primary" type="button" id="medianApplyBtn" onclick="processImage()">Áp dụng Median</button>
+                    <p class="info">Chạy lại HSV → Median → Morphology với toàn bộ thông số hiện tại. Không cần quay sang tab khác.</p>
+                    <div class="image-grid">
+                        <div class="image-item"><h4>Trước: Mask HSV thô</h4><img id="medianBefore" alt="Mask HSV trước Median"><p id="medianBeforeInfo" class="info"></p></div>
+                        <div class="image-item"><h4>Sau: Mask Median</h4><img id="medianAfter" alt="Mask sau Median"><p id="medianAfterInfo" class="info"></p></div>
+                    </div>
             </section>
             
             <!-- Tab: Morphology -->
             <section id="morph" class="tab-content">
                 <div class="card">
                     <h3>✨ Xử Lý Hình Thái Học (Morphology)</h3>
+                    <p>1. Chọn các phép toán cần dùng (có thể bỏ chọn tất cả). 2. Chọn kernel lẻ 1–31, dạng kernel và số lần lặp 1–10 cho mỗi phép. 3. Bấm Áp Dụng Morphology.</p>
+                    <p class="info">Các phép chạy theo thứ tự ghi dưới đây. Nút áp dụng chạy lại HSV → Median → Morphology; xem mask Median và mask cuối ngay bên dưới. Số pixel trắng không phải điểm chất lượng.</p>
+                    <p id="morphState" class="info" role="status" aria-live="polite"></p>
                     
                     <div class="controls">
                         <div class="control-group">
-                            <label>Kích Thước Kernel (lẻ)</label>
-                            <select id="morph_kernel">
-                                <option value="3">3x3</option>
-                                <option value="5" selected>5x5</option>
-                                <option value="7">7x7</option>
-                                <option value="9">9x9</option>
+                            <label for="morph_kernel">Kích Thước Kernel (số lẻ 1–31)</label>
+                            <input type="number" id="morph_kernel" value="5" min="1" max="31" step="2">
+                            <p class="info">Kernel 1 có thể là phép đồng nhất (không đổi mask). Số chẵn bị từ chối, không tự điều chỉnh.</p>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="morph_shape">Dạng Kernel</label>
+                            <select id="morph_shape">
+                                <option value="ellipse" selected>Ellipse</option>
+                                <option value="rect">Rectangle</option>
+                                <option value="cross">Cross</option>
                             </select>
                         </div>
-                        
+
                         <div class="control-group">
-                            <label>Các Phép Toán</label>
-                            <div class="checkbox-group">
-                                <label>
-                                    <input type="checkbox" id="use_closing" checked>
-                                    Closing (Dilation + Erosion - lấp kín lỗ)
-                                </label>
-                                <label>
-                                    <input type="checkbox" id="use_opening">
-                                    Opening (Erosion + Dilation - loại bỏ nhỏ)
-                                </label>
+                            <label>Các Phép Toán (áp dụng theo thứ tự: Closing → Opening → Erosion → Dilation)</label>
+                            <div class="morph-ops">
+                                <div class="morph-op-row">
+                                    <label>
+                                        <input type="checkbox" id="use_closing" checked>
+                                        <span class="morph-order">1</span> Closing (nở rồi co - lấp lỗ nhỏ)
+                                    </label>
+                                    <label class="morph-iter">Lặp
+                                        <input type="number" id="iter_close" value="1" min="1" max="10" step="1">
+                                    </label>
+                                </div>
+                                <div class="morph-op-row">
+                                    <label>
+                                        <input type="checkbox" id="use_opening">
+                                        <span class="morph-order">2</span> Opening (co rồi nở - loại điểm nhiễu nhỏ)
+                                    </label>
+                                    <label class="morph-iter">Lặp
+                                        <input type="number" id="iter_open" value="1" min="1" max="10" step="1" disabled>
+                                    </label>
+                                </div>
+                                <div class="morph-op-row">
+                                    <label>
+                                        <input type="checkbox" id="use_erosion">
+                                        <span class="morph-order">3</span> Erosion (co vùng trắng)
+                                    </label>
+                                    <label class="morph-iter">Lặp
+                                        <input type="number" id="iter_erode" value="1" min="1" max="10" step="1" disabled>
+                                    </label>
+                                </div>
+                                <div class="morph-op-row">
+                                    <label>
+                                        <input type="checkbox" id="use_dilation">
+                                        <span class="morph-order">4</span> Dilation (nở vùng trắng)
+                                    </label>
+                                    <label class="morph-iter">Lặp
+                                        <input type="number" id="iter_dilate" value="1" min="1" max="10" step="1" disabled>
+                                    </label>
+                                </div>
                             </div>
+                            <p class="info">Chuỗi sẽ áp dụng: <strong id="morphChain">Closing ×1</strong></p>
+                        </div>
+
+                        <div id="morphMessage" class="morph-message" role="alert" style="display:none;"></div>
+                        <div id="morphPending" class="morph-pending" style="display:none;">⚠️ Tham số Morphology đã đổi, chưa áp dụng.</div>
+
+                        <button class="btn btn-primary" type="button" id="morphApplyBtn" onclick="applyMorphology()">✅ Áp Dụng Morphology</button>
+                        <div class="image-grid">
+                            <div class="image-item"><h4>Trước: Mask Median</h4><img id="morphBefore" alt="Mask Median trước Morphology"><p id="morphBeforeInfo" class="info"></p></div>
+                            <div class="image-item"><h4>Sau: Mask Morphology</h4><img id="morphAfter" alt="Mask sau Morphology"><p id="morphAfterInfo" class="info"></p></div>
                         </div>
                     </div>
                 </div>
@@ -203,11 +288,17 @@
             <section id="evaluation" class="tab-content">
                 <div class="card">
                     <h3>📊 Đánh Giá Kết Quả</h3>
+                    <p>Ground Truth (GT) là mask chuẩn được gán nhãn độc lập: trắng (255) là vùng màu mục tiêu, đen (0) là nền. Không dùng mask HSV dự đoán làm GT.</p>
+                    <p>1. Tải ảnh, chọn màu và áp dụng xử lý. 2. Chọn GT đúng ảnh và đúng màu. 3. Bấm Đánh Giá để so GT với <strong>mask sau Morphology</strong>.</p>
+                    <p class="info">GT bắt buộc là PNG một kênh, uint8 (8-bit), chỉ chứa 0/255 và cùng kích thước ảnh sau xoay EXIF. Không dùng JPEG/RGB/RGBA; hệ thống không tự resize hay threshold.</p>
+                    <p class="info">Pixel Accuracy: tỷ lệ pixel đúng trên toàn ảnh, có thể cao khi nền chiếm nhiều diện tích. IoU: phần giao / phần hợp của vùng mục tiêu; càng gần 100% càng khớp GT. Cần đọc cùng nhau và kiểm tra GT đúng cặp.</p>
+                    <p id="evaluationState" class="info" role="status" aria-live="polite"></p>
+                    <button class="btn btn-secondary" type="button" id="evaluationProcessBtn" onclick="processImage()">Áp dụng xử lý hiện tại trước khi đánh giá</button>
                     
                     <div class="evaluation-input">
                         <label>Tải Ground Truth Mask</label>
-                        <input type="file" id="groundTruthInput" accept="image/*">
-                        <button class="btn btn-primary" onclick="evaluateResults()">🔍 Đánh Giá</button>
+                        <input type="file" id="groundTruthInput" accept=".png,image/png">
+                        <button class="btn btn-primary" id="evaluateBtn" onclick="evaluateResults()">🔍 Đánh Giá</button>
                     </div>
                     
                     <div id="metricsDisplay" class="metrics-display" style="display: none;">
@@ -261,6 +352,71 @@
                 </div>
             </section>
             
+            <!-- Tab: Compare HSV (Phase B) -->
+            <section id="compare" class="tab-content">
+                <div class="card">
+                    <h3>⚖️ So Sánh Ngưỡng HSV (2–6 cấu hình)</h3>
+                    <p class="cmp-note">Mọi cấu hình chạy trên cùng ảnh đã tải, cùng màu mục tiêu và cùng pipeline cố định. Chỉ ngưỡng HSV khác nhau. Trạng thái so sánh độc lập với tab xử lý đơn.</p>
+
+                    <div class="cmp-row">
+                        <label>Màu mục tiêu
+                            <select id="cmpTargetColor"></select>
+                        </label>
+                        <label>Giai đoạn đánh giá
+                            <select id="cmpStage">
+                                <option value="raw">Mask thô (raw)</option>
+                                <option value="median">Sau Median</option>
+                                <option value="morph">Sau Morphology</option>
+                            </select>
+                        </label>
+                        <label>Median kernel
+                            <input type="number" id="cmpMedianKernel" value="5" min="3" max="31" step="2">
+                        </label>
+                        <div class="info" style="flex-basis:100%">Morphology dùng chung với tab Morphology (đọc từ đó khi bấm chạy):
+                            <strong id="cmpMorphSummary"></strong>
+                        </div>
+                    </div>
+
+                    <div class="cmp-row">
+                        <label>Thêm cấu hình từ preset
+                            <select id="cmpPresetSelect"></select>
+                        </label>
+                        <button class="btn btn-secondary" id="cmpAddBtn" type="button" onclick="cmpAddConfig()">➕ Thêm bản sao</button>
+                        <span id="cmpCount" class="cmp-count"></span>
+                    </div>
+
+                    <div id="cmpConfigList" class="cmp-config-list"></div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="cmpRunBtn" type="button" onclick="cmpRun()">▶️ Chạy So Sánh</button>
+                        <label class="btn btn-secondary cmp-file">📂 Nhập comparison.json
+                            <input type="file" id="cmpImportInput" accept=".json,application/json" hidden>
+                        </label>
+                        <button class="btn btn-success" id="cmpExportBtn" type="button" onclick="cmpExport()" disabled>📦 Xuất ZIP</button>
+                    </div>
+                    <div id="cmpBanner" class="cmp-banner" style="display:none"></div>
+                </div>
+
+                <div class="card" id="cmpResultCard" style="display:none">
+                    <h3>🖼️ Mask cạnh nhau</h3>
+                    <div id="cmpStale" class="cmp-banner warn" style="display:none"></div>
+                    <div id="cmpGrid" class="cmp-grid"></div>
+                </div>
+
+                <div class="card" id="cmpEvalCard" style="display:none">
+                    <h3>📊 Đánh giá với Ground Truth</h3>
+                    <p class="cmp-note">GT phải là PNG 1 kênh uint8, cùng kích thước ảnh, chỉ chứa 0 và 255. Hệ thống không tự threshold hay resize.</p>
+                    <div class="cmp-row">
+                        <input type="file" id="cmpGtInput" accept=".png,image/png">
+                        <label class="cmp-check"><input type="checkbox" id="cmpGtConfirm"> Tôi xác nhận GT này đúng cặp với ảnh và đúng màu mục tiêu</label>
+                        <button class="btn btn-primary" id="cmpEvalBtn" type="button" onclick="cmpEvaluate()">📈 Đánh giá</button>
+                    </div>
+                    <div id="cmpEvalSummary" class="cmp-banner" style="display:none"></div>
+                    <div class="cmp-table-wrap"><table id="cmpTable" class="cmp-table"></table></div>
+                    <div id="cmpChart" class="cmp-chart"></div>
+                </div>
+            </section>
+
             <!-- Tab: Results -->
             <section id="results" class="tab-content">
                 <div class="card">
@@ -270,6 +426,7 @@
                         <button class="btn btn-success" onclick="downloadMask('raw')">📥 Tải Mask Thô</button>
                         <button class="btn btn-success" onclick="downloadMask('median')">📥 Tải Mask Median</button>
                         <button class="btn btn-success" onclick="downloadMask('morph')">📥 Tải Mask Cuối</button>
+                        <button class="btn btn-primary" id="exportZipBtn" onclick="exportResults()">📦 Export ZIP (lượt chạy hiện tại)</button>
                     </div>
                     
                     <div class="info-box">
@@ -277,7 +434,7 @@
                         <ul>
                             <li><strong>Mask Thô:</strong> Kết quả trực tiếp từ phân đoạn HSV</li>
                             <li><strong>Mask Median:</strong> Sau khi khử nhiễu bằng lọc trung vị</li>
-                            <li><strong>Mask Cuối:</strong> Sau xử lý hình thái học (kết quả tốt nhất)</li>
+                            <li><strong>Mask Cuối:</strong> Sau xử lý hình thái học; cần GT để xác định chất lượng</li>
                         </ul>
                     </div>
                 </div>
